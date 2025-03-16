@@ -1,13 +1,15 @@
 import base64
 import io
 import polars as pl
+import plotnine as p9
+from plotly.tools import mpl_to_plotly
+import matplotlib.pyplot as plt
+from io import BytesIO
 from dash import Dash, html, dcc, callback, Output, Input, State
 from flask import Flask
 
-# Initialize Flask
+# Initialize Flask and Dash
 server = Flask(__name__)
-
-# Initialize Dash
 app = Dash(__name__, server=server)
 
 # Define the layout
@@ -74,6 +76,63 @@ def parse_csv(contents):
     except Exception as e:
         print(f"Error parsing CSV: {e}")
         return None
+
+
+
+@callback(
+    Output('plot-container', 'children'),
+    Input('upload-data', 'contents')
+)
+def update_plot(contents):
+    """Create and display a line plot when data is uploaded"""
+    if contents is None:
+        return html.Div('Upload a file to see the plot.')
+    
+    df = parse_csv(contents)
+    if df is None:
+        return html.Div('Error processing the file for plotting.')
+    
+    # Data manipulation
+    df = df\
+        .rename({df.columns[0]: "value"})\
+        .with_row_index()
+
+    # Adding mean, std dev, and control limits
+    mean = df['value'].mean()
+    std_dev = df['value'].std()
+    upper_control_limit = mean + 3 * std_dev
+    lower_control_limit = mean - 3 * std_dev
+    usl = mean + 2 * std_dev  # Upper 2-sigma Limit
+    lsl = mean - 2 * std_dev  # Lower 2-sigma Limit
+    usl_1 = mean + 1 * std_dev  # Upper 1-sigma Limit
+    lsl_1 = mean - 1 * std_dev  # Lower 1-sigma Limit    
+
+    # Create plotnine plot
+    plot = (p9.ggplot(df, p9.aes(x='index', y='value'))
+            + p9.geom_line()
+            + p9.theme_minimal()
+            + p9.geom_hline(yintercept=mean, color='red', linetype='dashed')
+            + p9.geom_hline(yintercept=usl, color='blue', linetype='dashed')
+            + p9.geom_hline(yintercept=lsl, color='blue', linetype='dashed')
+            + p9.geom_hline(yintercept=usl_1, color='green', linetype='dashed')
+            + p9.geom_hline(yintercept=lsl_1, color='green', linetype='dashed')
+            + p9.geom_hline(yintercept=upper_control_limit, color='orange', linetype='dashed')
+            + p9.geom_hline(yintercept=lower_control_limit, color='orange', linetype='dashed')
+            + p9.labs(title='Time Series Plot', 
+                     x='Observation',
+                     y='Value'))
+    
+    # Save plot to bytes buffer
+    buffer = BytesIO()
+    plot.save(buffer, format='png', dpi=300, width=10, height=6)
+    buffer.seek(0)
+    
+    # Convert to base64 for display
+    image_base64 = base64.b64encode(buffer.getvalue()).decode()
+    
+    return html.Img(src=f'data:image/png;base64,{image_base64}',
+                    style={'width': '100%', 'max-width': '800px'})
+
 
 @callback(
     Output('output-data-upload', 'children'),
