@@ -12,28 +12,40 @@ app = Dash(__name__, server=server)
 
 # Define the layout
 app.layout = html.Div([
-    html.H1('Data Visualization Dashboard'),
+    html.H1('Lean Six Sigma - Control Chart Rules Detection'),
     
     # Upload component
     dcc.Upload(
         id='upload-data',
         children=html.Div([
-            'Drag and Drop or ',
-            html.A('Select CSV File')
+            'Select CSV with single column of numeric data'
         ]),
         style={
-            'width': '100%',
+            'width': '50%',
             'height': '60px',
             'lineHeight': '60px',
-            'borderWidth': '1px',
-            'borderStyle': 'dashed',
-            'borderRadius': '5px',
+            'borderWidth': '2px',
+            'borderStyle': 'solid',
+            'borderRadius': '6px',
+            'borderColor': '#9e9e9e',
+            'background': 'linear-gradient(180deg, #d6d6d6 0%, #9e9e9e 100%)',
             'textAlign': 'center',
-            'margin': '10px'
+            'margin': '10px',
+            'color': '#1a1a1a',
+            'fontFamily': '"Arial Narrow", sans-serif',
+            'fontWeight': 'bold',
+            'boxShadow': 'inset 0 -2px 4px rgba(0,0,0,0.3), 0 2px 6px rgba(0,0,0,0.3)',
+            'cursor': 'pointer',
+            'textTransform': 'uppercase',
+            'letterSpacing': '1px',
+            'borderTop': '2px solid #ffffff',
+            'borderLeft': '2px solid #ffffff',
+            'borderRight': '2px solid #6e6e6e',
+            'borderBottom': '2px solid #6e6e6e'
         },
         multiple=False
     ),
-    
+
     # Display the uploaded data info
     html.Div(id='output-data-upload'),
     
@@ -49,19 +61,18 @@ app.layout = html.Div([
 ])
 
 def parse_csv(contents):
-    """Parse uploaded CSV file contents"""
+    """Parse uploaded CSV file contents from Dash Upload component"""
     if contents is None:
         return None
     
-    content_type, content_string = contents.split(',')
-    decoded = base64.b64decode(content_string)
-    
     try:
-        # Read CSV using Polars
-        df = pl.read_csv(io.StringIO(decoded.decode('utf-8')))
-        return df
+        # Remove the data URI prefix (e.g., 'data:text/csv;base64,')
+        content_string = contents.split(',')[1]
+        # Decode base64 and convert to DataFrame
+        decoded = base64.b64decode(content_string).decode('utf-8')
+        return pl.read_csv(io.StringIO(decoded))
     except Exception as e:
-        print(e)
+        print(f"Error parsing CSV: {e}")
         return None
 
 @callback(
