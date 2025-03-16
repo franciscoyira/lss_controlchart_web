@@ -24,9 +24,3 @@ A minimal Flask application that uses Polars for data manipulation and Plotnine 
    ```
 
 5. Open your browser and navigate to `http://127.0.0.1:5000/`
-
-## Features
-
-- Uses Polars for efficient data manipulation
-- Plotnine (Python implementation of ggplot2) for creating visualizations
-- Simple Flask web interface to display the plot 
