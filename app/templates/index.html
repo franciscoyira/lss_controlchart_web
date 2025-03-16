@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Iris Dataset Visualization</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            line-height: 1.6;
+            margin: 0;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background-color: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+        h1 {
+            color: #333;
+            text-align: center;
+            margin-bottom: 20px;
+        }
+        .plot-container {
+            text-align: center;
+            margin: 20px 0;
+        }
+        .plot-container img {
+            max-width: 100%;
+            height: auto;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+        }
+        .description {
+            margin-top: 20px;
+            padding: 15px;
+            background-color: #f9f9f9;
+            border-radius: 4px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Iris Dataset Visualization</h1>
+        
+        <div class="plot-container">
+            <img src="data:image/png;base64,{{ plot_img }}" alt="Iris Dataset Scatterplot">
+        </div>
+        
+        <div class="description">
+            <h2>About this Visualization</h2>
+            <p>
+                This scatterplot shows the relationship between sepal length and sepal width for three species of iris flowers:
+                Setosa, Versicolor, and Virginica. Each point represents a single flower, with the color indicating the species.
+            </p>
+            <p>
+                The visualization was created using:
+            </p>
+            <ul>
+                <li><strong>Polars</strong>: A fast DataFrame library for data manipulation</li>
+                <li><strong>Plotnine</strong>: A Python implementation of the grammar of graphics (similar to R's ggplot2)</li>
+                <li><strong>Flask</strong>: A lightweight web framework for Python</li>
+            </ul>
+        </div>
+    </div>
+</body>
+</html> 
