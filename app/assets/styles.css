@@ -189,4 +189,44 @@
     100% {
         background-position: 0% 50%;
     }
+}
+
+/* Download button styles */
+.download-container {
+    margin: 0 0 15px 0;
+    padding: 0 20px;
+    display: flex;
+    justify-content: flex-start;
+}
+
+.action-button {
+    background-color: #f8f9fa;
+    color: #0062cc;
+    border: 1px solid #d1e0ff;
+    padding: 8px 16px;
+    border-radius: 6px;
+    font-family: "Inter", "Segoe UI", system-ui, sans-serif;
+    font-size: 0.9rem;
+    font-weight: 500;
+    cursor: pointer;
+    box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+    transition: all 0.2s ease;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.action-button:hover {
+    background-color: #f0f5ff;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.action-button:active {
+    background-color: #e0ebff;
+    box-shadow: 0 1px 1px rgba(0,0,0,0.05);
+}
+
+.button-icon {
+    width: 16px;
+    height: 16px;
 } 

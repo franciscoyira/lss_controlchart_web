@@ -47,19 +47,29 @@ app.layout = html.Div([
         ], id='btn-out-of-control', className='option-card'),
     ], className='data-options-container'),
 
-    # Plot container (will be used later)
+    # Plot container
     html.Div(id='plot-container'),
-    
-    # Download button (disabled for now)
-    html.Button(
-        'Download Plot',
-        id='btn-download',
-        className='hidden'
-    ),
 
     # Display the uploaded data info
     html.Div(id='output-data-upload'),
     
+    # Download buttons
+    html.Div([
+        html.Button(
+            'Download Plot',
+            id='btn-download',
+            className='hidden'
+        ),
+        html.Button([
+            html.Img(src='/assets/download_icon.svg', className='button-icon'),
+            'Download Data with Rules'
+        ],
+            id='btn-download-data',
+            className='action-button'
+        ),
+        dcc.Download(id='download-dataframe-csv'),
+    ], id='download-container', className='download-container'),
+
     # Empty state container - shows only when no data is loaded
     html.Div([
         html.Img(src='/assets/control-chart-icon.svg', className='empty-state-icon'),
@@ -72,6 +82,7 @@ app.layout = html.Div([
     
     # Store for the current data
     dcc.Store(id='stored-data'),
+    dcc.Store(id='processed-data-store'),
     
     #  sources footnote
     html.Div([
@@ -266,7 +277,9 @@ def process_data(df):
     [Output('plot-container', 'children'),
      Output('output-data-upload', 'children'),
      Output('stored-data', 'data'),
-     Output('empty-state', 'style')],
+     Output('empty-state', 'style'),
+     Output('processed-data-store', 'data'),
+     Output('download-container', 'style')],
     [Input('upload-data', 'contents'),
      Input('btn-in-control', 'n_clicks'),
      Input('btn-out-of-control', 'n_clicks')],
@@ -276,10 +289,11 @@ def process_data(df):
 def update_output(contents, in_control_clicks, out_control_clicks, filename, stored_data):
     """Update the output based on user interactions"""
     empty_state_style = {'margin': '40px auto', 'maxWidth': '800px'} # Default visible
+    download_container_style = {'display': 'none'} # Default hidden
     
     if not ctx.triggered:
         # No triggers, return empty outputs with visible empty state
-        return html.Div(), None, None, empty_state_style
+        return html.Div(), None, None, empty_state_style, None, download_container_style
     
     trigger_id = ctx.triggered[0]['prop_id'].split('.')[0]
     
@@ -297,10 +311,10 @@ def update_output(contents, in_control_clicks, out_control_clicks, filename, sto
         dataset_name = 'out_of_control.csv'
     else:
         # No valid triggers, return current state with visible empty state
-        return html.Div('Upload a file or select a predefined dataset.'), html.Div(), stored_data, empty_state_style
+        return html.Div('Upload a file or select a predefined dataset.'), html.Div(), stored_data, empty_state_style, None, download_container_style
     
     if df is None:
-        return html.Div('Error processing the data.'), html.Div(), None, empty_state_style
+        return html.Div('Error processing the data.'), html.Div(), None, empty_state_style, None, download_container_style
     
     # Process the data
     df_with_rules, limits = process_data(df)
@@ -333,10 +347,35 @@ def update_output(contents, in_control_clicks, out_control_clicks, filename, sto
     # Store current data
     stored_data = {'dataset_name': dataset_name}
     
-    # Hide empty state when data is loaded
-    empty_state_style = {'display': 'none'}
+    # Store processed data for download
+    processed_data = df_with_rules.to_dicts()
     
-    return plot_component, data_info, stored_data, empty_state_style
+    # Hide empty state and show download button when data is loaded
+    empty_state_style = {'display': 'none'}
+    download_container_style = {'display': 'block', 'marginBottom': '10px'}
+    
+    return plot_component, data_info, stored_data, empty_state_style, processed_data, download_container_style
+
+@callback(
+    Output('download-dataframe-csv', 'data'),
+    Input('btn-download-data', 'n_clicks'),
+    State('processed-data-store', 'data'),
+    State('stored-data', 'data'),
+    prevent_initial_call=True,
+)
+def download_csv(n_clicks, processed_data, stored_data):
+    """Download the dataset with rules as a CSV file"""
+    if n_clicks is None or processed_data is None:
+        return None
+    
+    # Convert the stored data back to a polars DataFrame
+    df = pl.DataFrame(processed_data)
+    
+    # Generate filename based on the original dataset name
+    filename = "rules_" + (stored_data.get('dataset_name', 'dataset') if stored_data else 'dataset')
+    
+    # Return the CSV data
+    return dcc.send_data_frame(df.to_pandas(), filename, index=False)
 
 if __name__ == '__main__':
     app.run(debug=True) 
