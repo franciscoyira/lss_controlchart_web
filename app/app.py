@@ -91,14 +91,23 @@ def calculate_control_limits(df: pl.DataFrame) -> dict:
 
 def add_control_rules(df: pl.DataFrame, limits: dict) -> pl.DataFrame:
     """Add control chart rules to the dataframe"""
-    return df.with_columns_seq(
-        rule_1_counter=pl.when(pl.col("value").is_between(limits['lcl'], limits['ucl']))
-            .then(0)
-            .otherwise(1),
-        
-        rule_1=pl.when(pl.col("rule_1_counter") > 0)
+    rule_1_counter = pl.when(pl.col("value").is_between(limits['lcl'], limits['ucl'])).then(0).otherwise(1)
+
+    rule_2_step_a = (pl.col("value") - limits['mean']).sign()
+    # counter of consecutive points on the same side
+    rule_2_down = pl.when(rule_2_step_a == -1).then(1).otherwise(0)
+    rule_2_up = pl.when(rule_2_step_a == 1).then(1).otherwise(0)
+    rule_2_counter_down = rule_2_down.rolling_sum(window_size=9)
+    rule_2_counter_up = rule_2_up.rolling_sum(window_size=9)
+
+
+    return df.with_columns(
+        rule_1 = pl.when(rule_1_counter > 0)
             .then(pl.lit("Broken"))
-            .otherwise(pl.lit("OK")).alias("rule_1")
+            .otherwise(pl.lit("OK")),
+        rule_2 = pl.when((rule_2_counter_down == 9) | (rule_2_counter_up == 9))
+            .then(pl.lit("Broken"))
+            .otherwise(pl.lit("OK"))
     )
 
 def create_control_chart(df: pl.DataFrame, limits: dict) -> Figure:
@@ -165,15 +174,19 @@ def show_uploaded_data(contents, filename):
     if df is None:
         return html.Div('Error processing the file.')
     
+    limits = calculate_control_limits(df)
+    df = add_control_rules(df, limits)
+    print("Columns in DataFrame:", df.columns)
+
     return html.Div([
         html.H5(f'Uploaded file: {filename}'),
-        html.H6(f'Shape: {df.shape}'),
+        html.H6(f'Number of observations: {df.shape[0]}'),
         dash_table.DataTable(
             data=df.to_dicts(),
             columns=[{"name": i, "id": i} for i in df.columns],
             style_table={
                 'height': '300px',
-                'width': '200px',
+                'width': '600px',
                 'overflowY': 'auto',
                 'overflowX': 'auto'
             },
