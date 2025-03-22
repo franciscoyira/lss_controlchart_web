@@ -12,7 +12,24 @@ app = Dash(__name__, server=server)
 
 # Define the layout
 app.layout = html.Div([
-    html.H1('Lean Six Sigma - Control Chart Rules Detection'),
+    html.H1('Lean Six Sigma - Control Chart Rules Detection', 
+            style={
+                'textAlign': 'center',
+                'fontFamily': '"Inter", "Segoe UI", system-ui, sans-serif',
+                'fontSize': '2.5rem',
+                'fontWeight': '600',
+                'color': '#fff',
+                'background': 'linear-gradient(120deg, #0062cc, #0097e6, #00b894)',
+                'backgroundSize': '200% 200%',
+                'animation': 'gradient 15s ease infinite',
+                'padding': '24px 30px',
+                'marginTop': '20px',
+                'marginBottom': '30px',
+                'borderRadius': '8px',
+                'boxShadow': '0 8px 16px rgba(0, 0, 0, 0.15)',
+                'letterSpacing': '0.5px',
+                'border': 'none',
+            }),
     
     # Upload component (button to upload csv)
     dcc.Upload(
@@ -91,17 +108,37 @@ def calculate_control_limits(df: pl.DataFrame) -> dict:
 
 def add_control_rules(df: pl.DataFrame, limits: dict) -> pl.DataFrame:
     """Add control chart rules to the dataframe"""
+    val_diff = pl.col('value').diff()
+
     rule_1_counter = pl.when(pl.col("value").is_between(limits['lcl'], limits['ucl'])).then(0).otherwise(1)
 
     # Rule 2: 9 consecutive points on the same 
     rule_2_sign = (pl.col("value") - limits['mean']).sign()
     rule_2_counter = rule_2_sign.rolling_sum(window_size=9)
 
+    # Rule 3: six points in a row steadily increasing or decreasing
+    rule_3_counter = val_diff.sign().rolling_sum(window_size=6).abs()
+
+    # Rule 4 - alternating pattern - 14 points in a row alternating up and down
+    rule_4_counter = pl.col('value') \
+        .diff() \
+        .sign() \
+        .diff() \
+        .abs() \
+        .rolling_sum(window_size=14) \
+        .truediv(2)
+
     return df.with_columns(
         rule_1 = pl.when(rule_1_counter > 0)
             .then(pl.lit("Broken"))
             .otherwise(pl.lit("OK")),
         rule_2 = pl.when((rule_2_counter.abs() == 9))
+            .then(pl.lit("Broken"))
+            .otherwise(pl.lit("OK")),
+        rule_3 = pl.when(rule_3_counter == 6)
+            .then(pl.lit("Broken"))
+            .otherwise(pl.lit("OK")),
+        rule_4 = pl.when(rule_4_counter == 14)
             .then(pl.lit("Broken"))
             .otherwise(pl.lit("OK"))
     )
