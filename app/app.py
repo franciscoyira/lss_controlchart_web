@@ -139,11 +139,46 @@ app.layout = html.Div([
     # Display the uploaded data info
     html.Div(id='output-data-upload'),
     
+    # Empty state container - shows only when no data is loaded
+    html.Div([
+        html.Img(src='/assets/control-chart-icon.svg', style={
+            'height': '100px', 
+            'margin': '40px auto 20px auto',
+            'display': 'block'
+        }),
+        html.H2('Welcome to the Control Chart Analyzer', 
+                style={
+                    'textAlign': 'center',
+                    'color': '#334155',
+                    'fontFamily': '"Inter", "Segoe UI", system-ui, sans-serif',
+                    'fontSize': '1.8rem',
+                    'fontWeight': '600',
+                    'margin': '10px 0 30px 0'
+                }),
+        html.P('Start by uploading your data or selecting one of the example datasets above.', 
+               style={
+                   'textAlign': 'center',
+                   'color': '#64748b',
+                   'fontFamily': '"Inter", "Segoe UI", system-ui, sans-serif',
+                   'fontSize': '1.1rem',
+                   'maxWidth': '600px',
+                   'margin': '0 auto 15px auto',
+                   'lineHeight': '1.6'
+               }),
+        html.P('This tool will analyze your process data against the 8 Nelson rules to identify unusual variation.',
+               style={
+                   'textAlign': 'center',
+                   'color': '#64748b',
+                   'fontFamily': '"Inter", "Segoe UI", system-ui, sans-serif',
+                   'fontSize': '1.1rem',
+                   'maxWidth': '600px',
+                   'margin': '0 auto 50px auto',
+                   'lineHeight': '1.6'
+               })
+    ], id='empty-state', style={'margin': '40px auto', 'maxWidth': '800px'}),
+    
     # Store for the current data
     dcc.Store(id='stored-data'),
-    
-    # Main content wrapper div with min-height to push references to bottom
-    html.Div(style={'minHeight': 'calc(100vh - 450px)'}),
     
     #  sources footnote
     html.Div([
@@ -346,7 +381,8 @@ def process_data(df):
 @callback(
     [Output('plot-container', 'children'),
      Output('output-data-upload', 'children'),
-     Output('stored-data', 'data')],
+     Output('stored-data', 'data'),
+     Output('empty-state', 'style')],
     [Input('upload-data', 'contents'),
      Input('btn-in-control', 'n_clicks'),
      Input('btn-out-of-control', 'n_clicks')],
@@ -355,9 +391,11 @@ def process_data(df):
 )
 def update_output(contents, in_control_clicks, out_control_clicks, filename, stored_data):
     """Update the output based on user interactions"""
+    empty_state_style = {'margin': '40px auto', 'maxWidth': '800px'} # Default visible
+    
     if not ctx.triggered:
-        # No triggers, return empty outputs
-        return html.Div(), None, None
+        # No triggers, return empty outputs with visible empty state
+        return html.Div(), None, None, empty_state_style
     
     trigger_id = ctx.triggered[0]['prop_id'].split('.')[0]
     
@@ -374,11 +412,11 @@ def update_output(contents, in_control_clicks, out_control_clicks, filename, sto
         df = load_predefined_dataset('out_of_control.csv')
         dataset_name = 'out_of_control.csv'
     else:
-        # No valid triggers, return current state
-        return html.Div('Upload a file or select a predefined dataset.'), html.Div(), stored_data
+        # No valid triggers, return current state with visible empty state
+        return html.Div('Upload a file or select a predefined dataset.'), html.Div(), stored_data, empty_state_style
     
     if df is None:
-        return html.Div('Error processing the data.'), html.Div(), None
+        return html.Div('Error processing the data.'), html.Div(), None, empty_state_style
     
     # Process the data
     df_with_rules, limits = process_data(df)
@@ -392,8 +430,8 @@ def update_output(contents, in_control_clicks, out_control_clicks, filename, sto
         html.H5(f'Data source: {dataset_name}'),
         html.H6(f'Number of observations: {df_with_rules.shape[0]}'),
         dash_table.DataTable(
-            data=df_with_rules.to_dicts(),
-            columns=[{"name": i, "id": i} for i in df_with_rules.columns],
+            data=df_with_rules.drop("index").to_dicts(),
+            columns=[{"name": i, "id": i} for i in df_with_rules.drop("index").columns],
             style_table={
                 'height': '300px',
                 'width': f'{100 * len(df_with_rules.columns) + 30}px',
@@ -415,7 +453,10 @@ def update_output(contents, in_control_clicks, out_control_clicks, filename, sto
     # Store current data
     stored_data = {'dataset_name': dataset_name}
     
-    return plot_component, data_info, stored_data
+    # Hide empty state when data is loaded
+    empty_state_style = {'display': 'none'}
+    
+    return plot_component, data_info, stored_data, empty_state_style
 
 if __name__ == '__main__':
     app.run(debug=True) 
