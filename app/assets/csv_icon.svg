@@ -1,0 +1,22 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="24" height="24" fill="none">
+  <!-- File outline -->
+  <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" stroke="#0062cc" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"></path>
+  <!-- Corner fold -->
+  <polyline points="14 2 14 8 20 8" stroke="#0062cc" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"></polyline>
+  <!-- Horizontal content lines -->
+  <line x1="8" y1="13" x2="16" y2="13" stroke="#0062cc" stroke-width="1" stroke-linecap="round"></line>
+  <line x1="8" y1="17" x2="16" y2="17" stroke="#0062cc" stroke-width="1" stroke-linecap="round"></line>
+  <!-- .CSV file extension badge -->
+  <rect x="7" y="4" width="10" height="6" rx="1" fill="#0062cc"></rect>
+  
+  <!-- Letters C S V made with paths -->
+  <!-- C -->
+  <path d="M8.8 7.5c0-0.6 0.4-1 1-1s0.9 0.3 1 0.7" stroke="#ffffff" stroke-width="0.7" stroke-linecap="round" stroke-linejoin="round" fill="none"></path>
+  <path d="M10.8 7.3c-0.1 0.4-0.5 0.7-1 0.7s-1-0.4-1-1 0.4-1 1-1 0.9 0.3 1 0.7" stroke="#ffffff" stroke-width="0.7" stroke-linecap="round" stroke-linejoin="round" fill="none"></path>
+  
+  <!-- S -->
+  <path d="M12 6.5c0-0.3 0.2-0.5 0.5-0.5s0.5 0.2 0.5 0.5-0.3 0.5-0.5 0.5c-0.2 0-0.5 0.2-0.5 0.5s0.2 0.5 0.5 0.5 0.5-0.2 0.5-0.5" stroke="#ffffff" stroke-width="0.7" stroke-linecap="round" stroke-linejoin="round" fill="none"></path>
+  
+  <!-- V -->
+  <polyline points="14 6 14.5 8 15 6" stroke="#ffffff" stroke-width="0.7" stroke-linecap="round" stroke-linejoin="round" fill="none"></polyline>
+</svg> 

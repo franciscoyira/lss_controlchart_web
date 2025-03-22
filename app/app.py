@@ -428,24 +428,66 @@ def update_output(contents, in_control_clicks, out_control_clicks, filename, sto
     
     # Create the data table
     data_info = html.Div([
-        html.H5(f'Data source: {dataset_name}'),
+        html.Div([
+            html.Img(src='/assets/csv_icon.svg', className='data-source-icon'),
+            html.H5(f'Data source: {dataset_name}')
+        ], className='data-source-header'),
         html.H6(f'Number of observations: {df_with_rules.shape[0]}'),
         dash_table.DataTable(
             data=df_with_rules.drop("index").to_dicts(),
             columns=[{"name": i, "id": i} for i in df_with_rules.drop("index").columns],
             style_table={
                 'height': '300px',
-                'width': f'{100 * len(df_with_rules.columns) + 30}px',
+                'maxWidth': '100%',
                 'overflowY': 'auto',
-                'overflowX': 'auto'
+                'overflowX': 'auto',
+                'borderRadius': '8px',
+                'boxShadow': '0 2px 4px rgba(0,0,0,0.1)',
+                'border': '1px solid #e9ecef'
             },
             cell_selectable=False,
-            style_cell_conditional=[{'textAlign': 'left'}],
-            style_cell={'padding': '8px', 'minWidth': '100px'},
-            style_data={'border': '1px solid #ddd'},
-            style_header={'backgroundColor': 'rgb(230, 230, 230)', 'fontWeight': 'bold'}
+            style_cell_conditional=[
+                {'if': {'column_id': 'value'}, 'textAlign': 'right'}
+            ] + [
+                {'if': {'column_id': c}, 'textAlign': 'center'} for c in [col for col in df_with_rules.columns if col.startswith('rule_')]
+            ],
+            style_cell={
+                'padding': '10px 15px',
+                'fontFamily': '"Inter", "Segoe UI", system-ui, sans-serif',
+                'fontSize': '14px',
+                'color': '#495057'
+            },
+            style_data={'border': '1px solid #e9ecef'},
+            style_data_conditional=[
+                {
+                    'if': {'filter_query': '{rule_1} = "Broken" || {rule_2} = "Broken" || {rule_3} = "Broken" || {rule_4} = "Broken" || {rule_5} = "Broken" || {rule_6} = "Broken" || {rule_7} = "Broken" || {rule_8} = "Broken"'},
+                    'backgroundColor': 'rgba(255, 240, 240, 0.7)'
+                },
+                {
+                    'if': {'filter_query': '{rule_1} = "Broken" || {rule_2} = "Broken" || {rule_3} = "Broken" || {rule_4} = "Broken" || {rule_5} = "Broken" || {rule_6} = "Broken" || {rule_7} = "Broken" || {rule_8} = "Broken"', 'column_id': 'value'},
+                    'fontWeight': 'bold',
+                    'color': '#dc3545'
+                }
+            ] + [
+                {
+                    'if': {'column_id': c, 'filter_query': '{' + c + '} = "Broken"'},
+                    'backgroundColor': 'rgba(220, 53, 69, 0.1)',
+                    'color': '#dc3545',
+                    'fontWeight': 'bold'
+                } for c in [col for col in df_with_rules.columns if col.startswith('rule_')]
+            ],
+            style_header={
+                'backgroundColor': '#f8f9fa',
+                'fontWeight': 'bold',
+                'border': '1px solid #e9ecef',
+                'borderBottom': '2px solid #dee2e6',
+                'color': '#0062cc',
+                'textAlign': 'left',
+                'padding': '12px 15px',
+                'fontFamily': '"Inter", "Segoe UI", system-ui, sans-serif'
+            }
         )
-    ])
+    ], className='data-info-container')
     
     # Store current data
     stored_data = {'dataset_name': dataset_name}

@@ -229,4 +229,46 @@
 .button-icon {
     width: 16px;
     height: 16px;
+}
+
+/* Data information container styles */
+.data-info-container {
+    background-color: #ffffff;
+    border-radius: 8px;
+    padding: 20px;
+    margin: 25px 20px;
+    box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+}
+
+.data-info-container h5 {
+    color: #0062cc;
+    font-family: "Inter", "Segoe UI", system-ui, sans-serif;
+    font-size: 1.25rem;
+    font-weight: 600;
+    margin-bottom: 10px;
+}
+
+.data-info-container h6 {
+    color: #495057;
+    font-family: "Inter", "Segoe UI", system-ui, sans-serif;
+    font-size: 1rem;
+    font-weight: 500;
+    margin-bottom: 20px;
+}
+
+/* Data source header with icon */
+.data-source-header {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 10px;
+}
+
+.data-source-icon {
+    width: 24px;
+    height: 24px;
+}
+
+.data-source-header h5 {
+    margin: 0;
 } 
