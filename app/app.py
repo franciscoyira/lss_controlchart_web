@@ -32,67 +32,77 @@ app.layout = html.Div([
                 'border': 'none',
             }),
     
-    # Upload component (button to upload csv)
-    dcc.Upload(
-        id='upload-data',
-        children=html.Div([
-            'Select CSV with single column of numeric data'
-        ]),
-        style={
-            'width': '100%',
-            'maxWidth': '500px',
-            'height': '60px',
-            'lineHeight': '60px',
-            'borderWidth': '2px',
-            'borderStyle': 'dashed',
-            'borderRadius': '12px',
-            'borderColor': '#4a90e2',
-            'background': '#f8f9fa',
-            'textAlign': 'center',
-            'margin': '20px auto',
-            'color': '#4a90e2',
-            'fontFamily': '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
-            'fontWeight': '500',
-            'cursor': 'pointer',
-            'transition': 'all 0.2s ease',
-            'position': 'relative',
-            'top': '0',
-            'boxShadow': '0 2px 4px rgba(74, 144, 226, 0.1)',
-        }
-    ),
-    
-    # Predefined dataset buttons
+    # Horizontal layout for upload and predefined datasets
     html.Div([
-        html.H4('Or use predefined datasets:', style={'textAlign': 'center', 'marginTop': '20px'}),
+        # Left side - Upload component
         html.Div([
-            html.Button('In-Control Dataset', 
-                        id='btn-in-control', 
-                        n_clicks=0,
-                        style={
-                            'backgroundColor': '#28a745',
-                            'color': 'white',
-                            'border': 'none',
-                            'padding': '10px 20px',
-                            'margin': '10px',
-                            'borderRadius': '5px',
-                            'cursor': 'pointer',
-                            'fontWeight': '500',
-                        }),
-            html.Button('Out-of-Control Dataset', 
-                        id='btn-out-of-control', 
-                        n_clicks=0,
-                        style={
-                            'backgroundColor': '#dc3545',
-                            'color': 'white',
-                            'border': 'none',
-                            'padding': '10px 20px',
-                            'margin': '10px',
-                            'borderRadius': '5px',
-                            'cursor': 'pointer',
-                            'fontWeight': '500',
-                        }),
-        ], style={'display': 'flex', 'justifyContent': 'center', 'gap': '10px'}),
-    ]),
+            dcc.Upload(
+                id='upload-data',
+                children=html.Div([
+                    'Select CSV with single column of numeric data'
+                ]),
+                style={
+                    'width': '100%',
+                    'height': '60px',
+                    'lineHeight': '60px',
+                    'borderWidth': '2px',
+                    'borderStyle': 'dashed',
+                    'borderRadius': '12px',
+                    'borderColor': '#4a90e2',
+                    'background': '#f8f9fa',
+                    'textAlign': 'center',
+                    'color': '#4a90e2',
+                    'fontFamily': '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
+                    'fontWeight': '500',
+                    'cursor': 'pointer',
+                    'transition': 'all 0.2s ease',
+                    'position': 'relative',
+                    'top': '0',
+                    'boxShadow': '0 2px 4px rgba(74, 144, 226, 0.1)',
+                }
+            ),
+        ], style={'flex': '1', 'paddingRight': '20px'}),
+        
+        # Center - OR text
+        html.Div([
+            html.H4('OR', style={'textAlign': 'center'})
+        ], style={'width': '10%', 'display': 'flex', 'justifyContent': 'center', 'alignItems': 'center'}),
+        
+        # Right side - Predefined dataset buttons
+        html.Div([
+            html.H4('Use one of the pre-defined datasets', style={'textAlign': 'center', 'marginBottom': '15px'}),
+            html.Div([
+                html.Button('In-Control Dataset', 
+                            id='btn-in-control', 
+                            n_clicks=0,
+                            style={
+                                'backgroundColor': '#28a745',
+                                'color': 'white',
+                                'border': 'none',
+                                'padding': '10px 20px',
+                                'margin': '0 10px',
+                                'borderRadius': '5px',
+                                'cursor': 'pointer',
+                                'fontWeight': '500',
+                                'minWidth': '180px',
+                            }),
+                html.Button('Out-of-Control Dataset', 
+                            id='btn-out-of-control', 
+                            n_clicks=0,
+                            style={
+                                'backgroundColor': '#dc3545',
+                                'color': 'white',
+                                'border': 'none',
+                                'padding': '10px 20px',
+                                'margin': '0 10px',
+                                'borderRadius': '5px',
+                                'cursor': 'pointer',
+                                'fontWeight': '500',
+                                'minWidth': '180px',
+                            }),
+            ], style={'display': 'flex', 'justifyContent': 'center', 'gap': '10px'}),
+        ], style={'flex': '1', 'paddingLeft': '20px'}),
+    ], style={'display': 'flex', 'justifyContent': 'space-between', 'alignItems': 'center', 'margin': '20px'}),
 
     # Plot container (will be used later)
     html.Div(id='plot-container'),
