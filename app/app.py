@@ -93,19 +93,15 @@ def add_control_rules(df: pl.DataFrame, limits: dict) -> pl.DataFrame:
     """Add control chart rules to the dataframe"""
     rule_1_counter = pl.when(pl.col("value").is_between(limits['lcl'], limits['ucl'])).then(0).otherwise(1)
 
-    rule_2_step_a = (pl.col("value") - limits['mean']).sign()
-    # counter of consecutive points on the same side
-    rule_2_down = pl.when(rule_2_step_a == -1).then(1).otherwise(0)
-    rule_2_up = pl.when(rule_2_step_a == 1).then(1).otherwise(0)
-    rule_2_counter_down = rule_2_down.rolling_sum(window_size=9)
-    rule_2_counter_up = rule_2_up.rolling_sum(window_size=9)
-
+    # Rule 2: 9 consecutive points on the same 
+    rule_2_sign = (pl.col("value") - limits['mean']).sign()
+    rule_2_counter = rule_2_sign.rolling_sum(window_size=9)
 
     return df.with_columns(
         rule_1 = pl.when(rule_1_counter > 0)
             .then(pl.lit("Broken"))
             .otherwise(pl.lit("OK")),
-        rule_2 = pl.when((rule_2_counter_down == 9) | (rule_2_counter_up == 9))
+        rule_2 = pl.when((rule_2_counter.abs() == 9))
             .then(pl.lit("Broken"))
             .otherwise(pl.lit("OK"))
     )
