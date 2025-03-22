@@ -109,6 +109,8 @@ def calculate_control_limits(df: pl.DataFrame) -> dict:
 def add_control_rules(df: pl.DataFrame, limits: dict) -> pl.DataFrame:
     """Add control chart rules to the dataframe"""
     val_diff = pl.col('value').diff()
+    in_zone_c = pl.col('value').is_between(limits['lsl_1'], limits['usl_1'])
+
 
     rule_1_counter = pl.when(pl.col("value").is_between(limits['lcl'], limits['ucl'])).then(0).otherwise(1)
 
@@ -144,8 +146,10 @@ def add_control_rules(df: pl.DataFrame, limits: dict) -> pl.DataFrame:
     rule_7_flag = pl.when(pl.col("value").is_between(limits['lsl_1'], limits['usl_1'])).then(1).otherwise(0)
     rule_7_counter = rule_7_flag.rolling_sum(window_size=15)
 
-    # Rule 8: Eight points in a row on both sides of centerline with none in Zones C 
-
+    # Rule 8: Eight points in a row with none in Zone C (that is, 8 points beyond 1 sigma)
+    # either side of the centerline (unlike rule 5)
+    rule_8_flag = pl.when(~in_zone_c).then(1).otherwise(0)
+    rule_8_counter = rule_8_flag.rolling_sum(window_size=8)
 
     return df.with_columns(
         rule_1 = pl.when(rule_1_counter > 0)
@@ -167,6 +171,9 @@ def add_control_rules(df: pl.DataFrame, limits: dict) -> pl.DataFrame:
             .then(pl.lit("Broken"))
             .otherwise(pl.lit("OK")),
         rule_7 = pl.when(rule_7_counter == 15)
+            .then(pl.lit("Broken"))
+            .otherwise(pl.lit("OK")),
+        rule_8 = pl.when(rule_8_counter == 8)
             .then(pl.lit("Broken"))
             .otherwise(pl.lit("OK"))
     )
@@ -247,7 +254,7 @@ def show_uploaded_data(contents, filename):
             columns=[{"name": i, "id": i} for i in df.columns],
             style_table={
                 'height': '300px',
-                'width': f'{100 * len(df.columns)}px',
+                'width': f'{100 * len(df.columns) + 30}px',
                 'overflowY': 'auto',
                 'overflowX': 'auto'
             },
