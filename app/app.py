@@ -13,118 +13,39 @@ app = Dash(__name__, server=server)
 
 # Define the layout
 app.layout = html.Div([
-    html.H1('Lean Six Sigma - Control Chart Rules Detection', 
-            style={
-                'textAlign': 'center',
-                'fontFamily': '"Inter", "Segoe UI", system-ui, sans-serif',
-                'fontSize': '2.5rem',
-                'fontWeight': '600',
-                'color': '#fff',
-                'background': 'linear-gradient(120deg, #0062cc, #0097e6, #00b894)',
-                'backgroundSize': '200% 200%',
-                'animation': 'gradient 15s ease infinite',
-                'padding': '24px 30px',
-                'marginTop': '20px',
-                'marginBottom': '30px',
-                'borderRadius': '8px',
-                'boxShadow': '0 8px 16px rgba(0, 0, 0, 0.15)',
-                'letterSpacing': '0.5px',
-                'border': 'none',
-            }),
+    html.H1('Lean Six Sigma - Control Chart Rules Detection', className='app-header'),
     
     # Card-style layout for data selection options
     html.Div([
         # Upload CSV Card
         html.Div([
             html.Div([
-                html.Img(src='/assets/upload_icon.svg', style={'height': '30px', 'margin': '10px'}),
-                html.Div("Upload your own CSV", style={'textAlign': 'center'})
-            ], style={'display': 'flex', 'flexDirection': 'column', 'alignItems': 'center', 'justifyContent': 'center'}),
+                html.Img(src='/assets/upload_icon.svg', className='card-icon'),
+                html.Div("Upload your own CSV")
+            ], className='card-content'),
             dcc.Upload(
                 id='upload-data',
                 children=html.Div([]),
-                style={
-                    'position': 'absolute',
-                    'top': 0,
-                    'left': 0,
-                    'width': '100%',
-                    'height': '100%',
-                    'opacity': 0,
-                    'cursor': 'pointer',
-                }
+                className='upload-component'
             ),
-        ], style={
-            'backgroundColor': '#f8f9fa',
-            'borderRadius': '8px',
-            'padding': '10px',
-            'textAlign': 'center',
-            'boxShadow': '0 2px 4px rgba(0,0,0,0.1)',
-            'flex': '1',
-            'height': '100px',
-            'position': 'relative',
-            'display': 'flex',
-            'alignItems': 'center',
-            'justifyContent': 'center',
-            'margin': '0 10px',
-            'transition': 'transform 0.2s, box-shadow 0.2s',
-            ':hover': {
-                'transform': 'translateY(-5px)',
-                'boxShadow': '0 5px 15px rgba(0,0,0,0.1)',
-            }
-        }),
+        ], id='upload-card', className='option-card upload-card'),
         
         # In-control Data Card
         html.Div([
             html.Div([
-                html.Img(src='/assets/chart_icon.svg', style={'height': '30px', 'margin': '10px'}),
-                html.Div("Try in-control data", style={'textAlign': 'center'})
-            ], style={'display': 'flex', 'flexDirection': 'column', 'alignItems': 'center', 'justifyContent': 'center'})
-        ], id='btn-in-control', style={
-            'backgroundColor': '#f8f9fa',
-            'borderRadius': '8px',
-            'padding': '10px',
-            'textAlign': 'center',
-            'boxShadow': '0 2px 4px rgba(0,0,0,0.1)',
-            'flex': '1',
-            'height': '100px',
-            'display': 'flex',
-            'alignItems': 'center',
-            'justifyContent': 'center',
-            'margin': '0 10px',
-            'cursor': 'pointer',
-            'transition': 'transform 0.2s, box-shadow 0.2s',
-            ':hover': {
-                'transform': 'translateY(-5px)',
-                'boxShadow': '0 5px 15px rgba(0,0,0,0.1)',
-            }
-        }),
+                html.Img(src='/assets/chart_icon.svg', className='card-icon'),
+                html.Div("Try in-control data")
+            ], className='card-content')
+        ], id='btn-in-control', className='option-card'),
         
         # Out-of-control Data Card
         html.Div([
             html.Div([
-                html.Img(src='/assets/warning_icon.svg', style={'height': '30px', 'margin': '10px'}),
-                html.Div("Try out-of-control data", style={'textAlign': 'center'})
-            ], style={'display': 'flex', 'flexDirection': 'column', 'alignItems': 'center', 'justifyContent': 'center'})
-        ], id='btn-out-of-control', style={
-            'backgroundColor': '#f8f9fa',
-            'borderRadius': '8px',
-            'padding': '10px',
-            'textAlign': 'center',
-            'boxShadow': '0 2px 4px rgba(0,0,0,0.1)',
-            'flex': '1',
-            'height': '100px',
-            'display': 'flex',
-            'alignItems': 'center',
-            'justifyContent': 'center',
-            'margin': '0 10px',
-            'cursor': 'pointer',
-            'transition': 'transform 0.2s, box-shadow 0.2s',
-            ':hover': {
-                'transform': 'translateY(-5px)',
-                'boxShadow': '0 5px 15px rgba(0,0,0,0.1)',
-            }
-        }),
-    ], style={'display': 'flex', 'justifyContent': 'space-between', 'margin': '20px auto', 'maxWidth': '800px'}),
+                html.Img(src='/assets/warning_icon.svg', className='card-icon'),
+                html.Div("Try out-of-control data")
+            ], className='card-content')
+        ], id='btn-out-of-control', className='option-card'),
+    ], className='data-options-container'),
 
     # Plot container (will be used later)
     html.Div(id='plot-container'),
@@ -133,7 +54,7 @@ app.layout = html.Div([
     html.Button(
         'Download Plot',
         id='btn-download',
-        style={'display': 'none'}  # Hidden until we implement plotting
+        className='hidden'
     ),
 
     # Display the uploaded data info
@@ -141,58 +62,23 @@ app.layout = html.Div([
     
     # Empty state container - shows only when no data is loaded
     html.Div([
-        html.Img(src='/assets/control-chart-icon.svg', style={
-            'height': '100px', 
-            'margin': '40px auto 20px auto',
-            'display': 'block'
-        }),
-        html.H2('Welcome to the Control Chart Analyzer', 
-                style={
-                    'textAlign': 'center',
-                    'color': '#334155',
-                    'fontFamily': '"Inter", "Segoe UI", system-ui, sans-serif',
-                    'fontSize': '1.8rem',
-                    'fontWeight': '600',
-                    'margin': '10px 0 30px 0'
-                }),
-        html.P('Start by uploading your data or selecting one of the example datasets above.', 
-               style={
-                   'textAlign': 'center',
-                   'color': '#64748b',
-                   'fontFamily': '"Inter", "Segoe UI", system-ui, sans-serif',
-                   'fontSize': '1.1rem',
-                   'maxWidth': '600px',
-                   'margin': '0 auto 15px auto',
-                   'lineHeight': '1.6'
-               }),
+        html.Img(src='/assets/control-chart-icon.svg', className='empty-state-icon'),
+        html.H2('Welcome to the Control Chart Analyzer', className='empty-state-heading'),
+        html.P('Start by uploading your data or selecting one of the example datasets above.',
+              className='empty-state-text'),
         html.P('This tool will analyze your process data against the 8 Nelson rules to identify unusual variation.',
-               style={
-                   'textAlign': 'center',
-                   'color': '#64748b',
-                   'fontFamily': '"Inter", "Segoe UI", system-ui, sans-serif',
-                   'fontSize': '1.1rem',
-                   'maxWidth': '600px',
-                   'margin': '0 auto 50px auto',
-                   'lineHeight': '1.6'
-               })
-    ], id='empty-state', style={'margin': '40px auto', 'maxWidth': '800px'}),
+              className='empty-state-text')
+    ], id='empty-state', className='empty-state'),
     
     # Store for the current data
     dcc.Store(id='stored-data'),
     
     #  sources footnote
     html.Div([
-        html.Hr(style={'marginTop': '40px', 'marginBottom': '15px', 'opacity': '0.2'}),
+        html.Hr(className='footer-hr'),
         html.Div([
             # References section with updated heading style
-            html.H6("References", style={
-                'fontSize': '0.95rem',
-                'color': '#495057',
-                'fontFamily': '"Inter", "Segoe UI", system-ui, sans-serif',
-                'fontWeight': '500',
-                'marginBottom': '10px',
-                'letterSpacing': '0.4px'
-            }),
+            html.H6("References", className='references-heading'),
             html.P([
                 "Nelson, L.S. (1984). The Shewhart Control Chart—Tests for Special Causes. ",
                 html.I("Journal of Quality Technology"), 
@@ -205,52 +91,20 @@ app.layout = html.Div([
                 html.A("https://apps.dtic.mil/sti/pdfs/ADA310869.pdf", 
                        href="https://apps.dtic.mil/sti/pdfs/ADA310869.pdf", 
                        target="_blank")
-            ], style={
-                'fontSize': '0.85rem',
-                'color': '#6c757d',
-                'fontFamily': '"Inter", "Segoe UI", system-ui, sans-serif',
-                'lineHeight': '1.5',
-                'textAlign': 'left',
-                'marginBottom': '20px',
-                'fontWeight': '400'
-            }),
+            ], className='references-text'),
             
             # Creator attribution with link to portfolio
             html.Div([
-                html.Span("Made by ", style={'color': '#6c757d'}),
+                html.Span("Made by ", className='creator-text'),
                 html.A("Francisco Yirá", 
                        href="https://cv.franciscoyira.com/", 
                        target="_blank",
-                       style={
-                           'color': '#0062cc',
-                           'textDecoration': 'none',
-                           'borderBottom': '1px dotted #0062cc',
-                           'transition': 'color 0.2s, borderBottom 0.2s'
-                       }),
-                html.Span(" in Toronto, Canada ", style={'color': '#6c757d'}),
-                html.Span("🍁", style={'fontSize': '0.9rem'})
-            ], style={
-                'fontSize': '0.85rem',
-                'fontFamily': '"Inter", "Segoe UI", system-ui, sans-serif',
-                'textAlign': 'center',
-                'marginTop': '30px',
-                'paddingTop': '15px',
-                'borderTop': '1px solid rgba(0,0,0,0.05)'
-            })
-        ], style={
-            'padding': '0 20px',
-            'maxWidth': '1200px',
-            'margin': '0 auto'
-        })
-    ], style={
-        'backgroundColor': '#f8f9fa',
-        'borderTop': '1px solid #e9ecef',
-        'marginTop': '30px',
-        'paddingBottom': '20px',
-        'width': '100%',
-        'position': 'relative',
-        'bottom': '0'
-    })
+                       className='creator-link'),
+                html.Span(" in Toronto, Canada ", className='creator-text'),
+                html.Span("🍁", className='emoji')
+            ], className='creator-attribution')
+        ], className='footer-content')
+    ], className='app-footer')
 ])
 
 # Function to read predefined datasets
@@ -468,15 +322,11 @@ def update_output(contents, in_control_clicks, out_control_clicks, filename, sto
                 'overflowY': 'auto',
                 'overflowX': 'auto'
             },
-            style_cell={
-                'textAlign': 'left',
-                'padding': '8px',
-                'minWidth': '100px'
-            },
-            style_header={
-                'backgroundColor': 'rgb(230, 230, 230)',
-                'fontWeight': 'bold'
-            }
+            cell_selectable=False,
+            style_cell_conditional=[{'textAlign': 'left'}],
+            style_cell={'padding': '8px', 'minWidth': '100px'},
+            style_data={'border': '1px solid #ddd'},
+            style_header={'backgroundColor': 'rgb(230, 230, 230)', 'fontWeight': 'bold'}
         )
     ])
     
