@@ -2,6 +2,7 @@ import base64
 import io
 import polars as pl
 import plotly.express as px
+from plotly.graph_objects import Figure
 from dash import Dash, html, dcc, callback, Output, Input, State, dash_table
 from flask import Flask
 
@@ -72,7 +73,52 @@ def parse_csv(contents):
         print(f"Error parsing CSV: {e}")
         return None
 
+def calculate_control_limits(df: pl.DataFrame) -> dict:
+    """Calculate all control limits from the data"""
+    mean = df['value'].mean()
+    std_dev = df['value'].std()
+    
+    return {
+        'mean': mean,
+        'std_dev': std_dev,
+        'ucl': mean + 3 * std_dev,  # Upper Control Limit
+        'lcl': mean - 3 * std_dev,  # Lower Control Limit
+        'usl': mean + 2 * std_dev,  # Upper 2-sigma Limit
+        'lsl': mean - 2 * std_dev,  # Lower 2-sigma Limit
+        'usl_1': mean + std_dev,    # Upper 1-sigma Limit
+        'lsl_1': mean - std_dev,    # Lower 1-sigma Limit
+    }
 
+def add_control_rules(df: pl.DataFrame, limits: dict) -> pl.DataFrame:
+    """Add control chart rules to the dataframe"""
+    return df.with_columns_seq(
+        pl.when(pl.col("value").is_between(limits['lcl'], limits['ucl']))
+        .then(0)
+        .otherwise(1)
+        .alias("rule_1_counter"))
+
+def create_control_chart(df: pl.DataFrame, limits: dict) -> Figure:
+    """Create a control chart plot with all control limits"""
+    # Create base plot
+    fig = px.line(df, x='index', y='value', title='Control Chart Plot')
+    
+    # Add control limit lines
+    fig.add_hline(y=limits['mean'], line_dash="dash", line_color="red", annotation_text="Mean")
+    fig.add_hline(y=limits['usl'], line_dash="dash", line_color="blue", annotation_text="2σ")
+    fig.add_hline(y=limits['lsl'], line_dash="dash", line_color="blue")
+    fig.add_hline(y=limits['usl_1'], line_dash="dash", line_color="green", annotation_text="1σ")
+    fig.add_hline(y=limits['lsl_1'], line_dash="dash", line_color="green")
+    fig.add_hline(y=limits['ucl'], line_dash="dash", line_color="orange", annotation_text="3σ")
+    fig.add_hline(y=limits['lcl'], line_dash="dash", line_color="orange")
+    
+    # Update layout
+    fig.update_layout(
+        xaxis_title="Observation",
+        yaxis_title="Value",
+        showlegend=False
+    )
+    
+    return fig
 
 @callback(
     Output('plot-container', 'children'),
@@ -87,42 +133,19 @@ def update_plot(contents):
     if df is None:
         return html.Div('Error processing the file for plotting.')
     
-    # Data manipulation
+    # Prepare dataframe
     df = df\
         .rename({df.columns[0]: "value"})\
         .with_row_index()
-
-    # Adding mean, std dev, and control limits
-    mean = df['value'].mean()
-    std_dev = df['value'].std()
-    upper_control_limit = mean + 3 * std_dev
-    lower_control_limit = mean - 3 * std_dev
-    usl = mean + 2 * std_dev  # Upper 2-sigma Limit
-    lsl = mean - 2 * std_dev  # Lower 2-sigma Limit
-    usl_1 = mean + 1 * std_dev  # Upper 1-sigma Limit
-    lsl_1 = mean - 1 * std_dev  # Lower 1-sigma Limit    
-
-    # Create Plotly Express figure
-    fig = px.line(df, x='index', y='value', title='Control Chart Plot')
     
-    # Add control limit lines
-    fig.add_hline(y=mean, line_dash="dash", line_color="red", annotation_text="Mean")
-    fig.add_hline(y=usl, line_dash="dash", line_color="blue", annotation_text="2σ")
-    fig.add_hline(y=lsl, line_dash="dash", line_color="blue")
-    fig.add_hline(y=usl_1, line_dash="dash", line_color="green", annotation_text="1σ")
-    fig.add_hline(y=lsl_1, line_dash="dash", line_color="green")
-    fig.add_hline(y=upper_control_limit, line_dash="dash", line_color="orange", annotation_text="3σ")
-    fig.add_hline(y=lower_control_limit, line_dash="dash", line_color="orange")
+    # Calculate limits once
+    limits = calculate_control_limits(df)
     
-    # Update layout
-    fig.update_layout(
-        xaxis_title="Observation",
-        yaxis_title="Value",
-        showlegend=False
-    )
+    # Add control rules and create plot
+    df = add_control_rules(df, limits)
+    fig = create_control_chart(df, limits)
     
     return dcc.Graph(figure=fig)
-
 
 @callback(
     Output('output-data-upload', 'children'),
