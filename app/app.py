@@ -247,7 +247,7 @@ def show_uploaded_data(contents, filename):
             columns=[{"name": i, "id": i} for i in df.columns],
             style_table={
                 'height': '300px',
-                'width': '600px',
+                'width': f'{100 * len(df.columns)}px',
                 'overflowY': 'auto',
                 'overflowX': 'auto'
             },
