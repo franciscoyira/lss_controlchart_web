@@ -1,10 +1,7 @@
 import base64
 import io
 import polars as pl
-import plotnine as p9
-from plotly.tools import mpl_to_plotly
-import matplotlib.pyplot as plt
-from io import BytesIO
+import plotly.express as px
 from dash import Dash, html, dcc, callback, Output, Input, State, dash_table
 from flask import Flask
 
@@ -105,31 +102,26 @@ def update_plot(contents):
     usl_1 = mean + 1 * std_dev  # Upper 1-sigma Limit
     lsl_1 = mean - 1 * std_dev  # Lower 1-sigma Limit    
 
-    # Create plotnine plot
-    plot = (p9.ggplot(df, p9.aes(x='index', y='value'))
-            + p9.geom_line()
-            + p9.theme_minimal()
-            + p9.geom_hline(yintercept=mean, color='red', linetype='dashed')
-            + p9.geom_hline(yintercept=usl, color='blue', linetype='dashed')
-            + p9.geom_hline(yintercept=lsl, color='blue', linetype='dashed')
-            + p9.geom_hline(yintercept=usl_1, color='green', linetype='dashed')
-            + p9.geom_hline(yintercept=lsl_1, color='green', linetype='dashed')
-            + p9.geom_hline(yintercept=upper_control_limit, color='orange', linetype='dashed')
-            + p9.geom_hline(yintercept=lower_control_limit, color='orange', linetype='dashed')
-            + p9.labs(title='Time Series Plot', 
-                     x='Observation',
-                     y='Value'))
+    # Create Plotly Express figure
+    fig = px.line(df, x='index', y='value', title='Control Chart Plot')
     
-    # Save plot to bytes buffer
-    buffer = BytesIO()
-    plot.save(buffer, format='png', dpi=300, width=10, height=6)
-    buffer.seek(0)
+    # Add control limit lines
+    fig.add_hline(y=mean, line_dash="dash", line_color="red", annotation_text="Mean")
+    fig.add_hline(y=usl, line_dash="dash", line_color="blue", annotation_text="2σ")
+    fig.add_hline(y=lsl, line_dash="dash", line_color="blue")
+    fig.add_hline(y=usl_1, line_dash="dash", line_color="green", annotation_text="1σ")
+    fig.add_hline(y=lsl_1, line_dash="dash", line_color="green")
+    fig.add_hline(y=upper_control_limit, line_dash="dash", line_color="orange", annotation_text="3σ")
+    fig.add_hline(y=lower_control_limit, line_dash="dash", line_color="orange")
     
-    # Convert to base64 for display
-    image_base64 = base64.b64encode(buffer.getvalue()).decode()
+    # Update layout
+    fig.update_layout(
+        xaxis_title="Observation",
+        yaxis_title="Value",
+        showlegend=False
+    )
     
-    return html.Img(src=f'data:image/png;base64,{image_base64}',
-                    style={'width': '100%', 'max-width': '800px'})
+    return dcc.Graph(figure=fig)
 
 
 @callback(
