@@ -5,7 +5,7 @@ import plotnine as p9
 from plotly.tools import mpl_to_plotly
 import matplotlib.pyplot as plt
 from io import BytesIO
-from dash import Dash, html, dcc, callback, Output, Input, State
+from dash import Dash, html, dcc, callback, Output, Input, State, dash_table
 from flask import Flask
 
 # Initialize Flask and Dash
@@ -16,7 +16,7 @@ app = Dash(__name__, server=server)
 app.layout = html.Div([
     html.H1('Lean Six Sigma - Control Chart Rules Detection'),
     
-    # Upload component
+    # Upload component (button to upload csv)
     dcc.Upload(
         id='upload-data',
         children=html.Div([
@@ -45,9 +45,6 @@ app.layout = html.Div([
         }
     ),
 
-    # Display the uploaded data info
-    html.Div(id='output-data-upload'),
-    
     # Plot container (will be used later)
     html.Div(id='plot-container'),
     
@@ -57,6 +54,10 @@ app.layout = html.Div([
         id='btn-download',
         style={'display': 'none'}  # Hidden until we implement plotting
     ),
+
+    # Display the uploaded data info
+    html.Div(id='output-data-upload')
+    
 ])
 
 def parse_csv(contents):
@@ -69,7 +70,7 @@ def parse_csv(contents):
         content_string = contents.split(',')[1]
         # Decode base64 and convert to DataFrame
         decoded = base64.b64decode(content_string).decode('utf-8')
-        return pl.read_csv(io.StringIO(decoded))
+        return pl.read_csv(io.StringIO(decoded), columns=[0])
     except Exception as e:
         print(f"Error parsing CSV: {e}")
         return None
@@ -81,7 +82,7 @@ def parse_csv(contents):
     Input('upload-data', 'contents')
 )
 def update_plot(contents):
-    """Create and display a line plot when data is uploaded"""
+    """Create and display a control chart plot when data is uploaded"""
     if contents is None:
         return html.Div('Upload a file to see the plot.')
     
@@ -147,9 +148,26 @@ def update_output(contents, filename):
     
     return html.Div([
         html.H5(f'Uploaded file: {filename}'),
-        html.H6('Data Preview:'),
-        html.Pre(str(df.head())),
-        html.H6(f'Shape: {df.shape}')
+        html.H6(f'Shape: {df.shape}'),
+        dash_table.DataTable(
+            data=df.to_dicts(),
+            columns=[{"name": i, "id": i} for i in df.columns],
+            style_table={
+                'height': '300px',
+                'width': '200px',
+                'overflowY': 'auto',
+                'overflowX': 'auto'
+            },
+            style_cell={
+                'textAlign': 'left',
+                'padding': '8px',
+                'minWidth': '100px'
+            },
+            style_header={
+                'backgroundColor': 'rgb(230, 230, 230)',
+                'fontWeight': 'bold'
+            }
+        )
     ])
 
 if __name__ == '__main__':
