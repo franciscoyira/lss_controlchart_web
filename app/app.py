@@ -137,7 +137,7 @@ def update_plot(contents):
     Input('upload-data', 'contents'),
     State('upload-data', 'filename')
 )
-def update_output(contents, filename):
+def show_uploaded_data(contents, filename):
     """Update the output div when a file is uploaded"""
     if contents is None:
         return html.Div('No file uploaded yet.')
