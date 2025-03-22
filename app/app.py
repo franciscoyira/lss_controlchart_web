@@ -136,6 +136,10 @@ def add_control_rules(df: pl.DataFrame, limits: dict) -> pl.DataFrame:
     rule_6_flag = pl.when(pl.col("value").is_between(limits['lsl_1'], limits['usl_1'])).then(0).otherwise(1)
     rule_6_counter = rule_6_flag.rolling_sum(window_size=5)
 
+    # Rule 7: Fifteen points in a row within Zone C (the one closest to the centreline) 
+    rule_7_flag = pl.when(pl.col("value").is_between(limits['lsl_1'], limits['usl_1'])).then(1).otherwise(0)
+    rule_7_counter = rule_7_flag.rolling_sum(window_size=15)
+
     return df.with_columns(
         rule_1 = pl.when(rule_1_counter > 0)
             .then(pl.lit("Broken"))
@@ -154,8 +158,10 @@ def add_control_rules(df: pl.DataFrame, limits: dict) -> pl.DataFrame:
             .otherwise(pl.lit("OK")),
         rule_6 = pl.when(rule_6_counter == 4)
             .then(pl.lit("Broken"))
+            .otherwise(pl.lit("OK")),
+        rule_7 = pl.when(rule_7_counter == 15)
+            .then(pl.lit("Broken"))
             .otherwise(pl.lit("OK"))
-
     )
 
 def create_control_chart(df: pl.DataFrame, limits: dict) -> Figure:
