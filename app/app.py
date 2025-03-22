@@ -92,10 +92,14 @@ def calculate_control_limits(df: pl.DataFrame) -> dict:
 def add_control_rules(df: pl.DataFrame, limits: dict) -> pl.DataFrame:
     """Add control chart rules to the dataframe"""
     return df.with_columns_seq(
-        pl.when(pl.col("value").is_between(limits['lcl'], limits['ucl']))
-        .then(0)
-        .otherwise(1)
-        .alias("rule_1_counter"))
+        rule_1_counter=pl.when(pl.col("value").is_between(limits['lcl'], limits['ucl']))
+            .then(0)
+            .otherwise(1),
+        
+        rule_1=pl.when(pl.col("rule_1_counter") > 0)
+            .then(pl.lit("Broken"))
+            .otherwise(pl.lit("OK")).alias("rule_1")
+    )
 
 def create_control_chart(df: pl.DataFrame, limits: dict) -> Figure:
     """Create a control chart plot with all control limits"""
