@@ -118,8 +118,52 @@ app.layout = html.Div([
     html.Div(id='output-data-upload'),
     
     # Store for the current data
-    dcc.Store(id='stored-data')
+    dcc.Store(id='stored-data'),
     
+    # Main content wrapper div with min-height to push references to bottom
+    html.Div(style={'minHeight': 'calc(100vh - 450px)'}),
+    
+    #  sources footnote
+    html.Div([
+        html.Hr(style={'marginTop': '40px', 'marginBottom': '15px', 'opacity': '0.2'}),
+        html.Div([
+            html.P([
+                "References:",
+                html.Br(),
+                "Nelson, L.S. (1984). The Shewhart Control Chart—Tests for Special Causes. ",
+                html.I("Journal of Quality Technology"), 
+                " 16(4), 238-239. ", 
+                html.A("https://doi.org/10.1080/00224065.1984.11978921", 
+                       href="https://doi.org/10.1080/00224065.1984.11978921", 
+                       target="_blank"),
+                html.Br(),
+                "Office of the Secretary of Defense, Quality Management Office (1989). Small Business Guidebook to Quality Management, pp. 45-46, 63-64. ",
+                html.A("https://apps.dtic.mil/sti/pdfs/ADA310869.pdf", 
+                       href="https://apps.dtic.mil/sti/pdfs/ADA310869.pdf", 
+                       target="_blank")
+            ], style={
+                'fontSize': '0.85rem',
+                'color': '#6c757d',
+                'fontFamily': '"Inter", "Segoe UI", system-ui, sans-serif',
+                'lineHeight': '1.5',
+                'textAlign': 'left',
+                'marginBottom': '20px',
+                'fontWeight': '400'
+            })
+        ], style={
+            'padding': '0 20px',
+            'maxWidth': '1200px',
+            'margin': '0 auto'
+        })
+    ], style={
+        'backgroundColor': '#f8f9fa',
+        'borderTop': '1px solid #e9ecef',
+        'marginTop': '30px',
+        'paddingBottom': '20px',
+        'width': '100%',
+        'position': 'relative',
+        'bottom': '0'
+    })
 ])
 
 # Function to read predefined datasets
