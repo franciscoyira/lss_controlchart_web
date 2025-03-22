@@ -184,9 +184,16 @@ app.layout = html.Div([
     html.Div([
         html.Hr(style={'marginTop': '40px', 'marginBottom': '15px', 'opacity': '0.2'}),
         html.Div([
+            # References section with updated heading style
+            html.H6("References", style={
+                'fontSize': '0.95rem',
+                'color': '#495057',
+                'fontFamily': '"Inter", "Segoe UI", system-ui, sans-serif',
+                'fontWeight': '500',
+                'marginBottom': '10px',
+                'letterSpacing': '0.4px'
+            }),
             html.P([
-                "References:",
-                html.Br(),
                 "Nelson, L.S. (1984). The Shewhart Control Chart—Tests for Special Causes. ",
                 html.I("Journal of Quality Technology"), 
                 " 16(4), 238-239. ", 
@@ -206,6 +213,29 @@ app.layout = html.Div([
                 'textAlign': 'left',
                 'marginBottom': '20px',
                 'fontWeight': '400'
+            }),
+            
+            # Creator attribution with link to portfolio
+            html.Div([
+                html.Span("Made by ", style={'color': '#6c757d'}),
+                html.A("Francisco Yirá", 
+                       href="https://cv.franciscoyira.com/", 
+                       target="_blank",
+                       style={
+                           'color': '#0062cc',
+                           'textDecoration': 'none',
+                           'borderBottom': '1px dotted #0062cc',
+                           'transition': 'color 0.2s, borderBottom 0.2s'
+                       }),
+                html.Span(" in Toronto, Canada ", style={'color': '#6c757d'}),
+                html.Span("🍁", style={'fontSize': '0.9rem'})
+            ], style={
+                'fontSize': '0.85rem',
+                'fontFamily': '"Inter", "Segoe UI", system-ui, sans-serif',
+                'textAlign': 'center',
+                'marginTop': '30px',
+                'paddingTop': '15px',
+                'borderTop': '1px solid rgba(0,0,0,0.05)'
             })
         ], style={
             'padding': '0 20px',
