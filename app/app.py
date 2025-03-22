@@ -127,6 +127,14 @@ def add_control_rules(df: pl.DataFrame, limits: dict) -> pl.DataFrame:
         .abs() \
         .rolling_sum(window_size=14) \
         .truediv(2)
+    
+    # Rule 5: Two out of three points in a row in Zone A (2 sigma) or beyond 
+    rule_5_flag = pl.when(pl.col("value").is_between(limits['lsl'], limits['usl'])).then(0).otherwise(1)
+    rule_5_counter = rule_5_flag.rolling_sum(window_size=3)
+
+    # Rule 6: Four out of five points in a row in Zone B or beyond
+    rule_6_flag = pl.when(pl.col("value").is_between(limits['lsl_1'], limits['usl_1'])).then(0).otherwise(1)
+    rule_6_counter = rule_6_flag.rolling_sum(window_size=5)
 
     return df.with_columns(
         rule_1 = pl.when(rule_1_counter > 0)
@@ -140,7 +148,14 @@ def add_control_rules(df: pl.DataFrame, limits: dict) -> pl.DataFrame:
             .otherwise(pl.lit("OK")),
         rule_4 = pl.when(rule_4_counter == 14)
             .then(pl.lit("Broken"))
+            .otherwise(pl.lit("OK")),
+        rule_5 = pl.when(rule_5_counter == 2)
+            .then(pl.lit("Broken"))
+            .otherwise(pl.lit("OK")),
+        rule_6 = pl.when(rule_6_counter == 4)
+            .then(pl.lit("Broken"))
             .otherwise(pl.lit("OK"))
+
     )
 
 def create_control_chart(df: pl.DataFrame, limits: dict) -> Figure:
