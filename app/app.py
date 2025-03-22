@@ -32,77 +32,99 @@ app.layout = html.Div([
                 'border': 'none',
             }),
     
-    # Horizontal layout for upload and predefined datasets
+    # Card-style layout for data selection options
     html.Div([
-        # Left side - Upload component
+        # Upload CSV Card
         html.Div([
+            html.Div([
+                html.Img(src='/assets/upload_icon.svg', style={'height': '30px', 'margin': '10px'}),
+                html.Div("Upload your own CSV", style={'textAlign': 'center'})
+            ], style={'display': 'flex', 'flexDirection': 'column', 'alignItems': 'center', 'justifyContent': 'center'}),
             dcc.Upload(
                 id='upload-data',
-                children=html.Div([
-                    'Select CSV with single column of numeric data'
-                ]),
+                children=html.Div([]),
                 style={
+                    'position': 'absolute',
+                    'top': 0,
+                    'left': 0,
                     'width': '100%',
-                    'height': '60px',
-                    'lineHeight': '60px',
-                    'borderWidth': '2px',
-                    'borderStyle': 'dashed',
-                    'borderRadius': '12px',
-                    'borderColor': '#4a90e2',
-                    'background': '#f8f9fa',
-                    'textAlign': 'center',
-                    'color': '#4a90e2',
-                    'fontFamily': '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
-                    'fontWeight': '500',
+                    'height': '100%',
+                    'opacity': 0,
                     'cursor': 'pointer',
-                    'transition': 'all 0.2s ease',
-                    'position': 'relative',
-                    'top': '0',
-                    'boxShadow': '0 2px 4px rgba(74, 144, 226, 0.1)',
                 }
             ),
-        ], style={'flex': '1', 'paddingRight': '20px'}),
+        ], style={
+            'backgroundColor': '#f8f9fa',
+            'borderRadius': '8px',
+            'padding': '10px',
+            'textAlign': 'center',
+            'boxShadow': '0 2px 4px rgba(0,0,0,0.1)',
+            'flex': '1',
+            'height': '100px',
+            'position': 'relative',
+            'display': 'flex',
+            'alignItems': 'center',
+            'justifyContent': 'center',
+            'margin': '0 10px',
+            'transition': 'transform 0.2s, box-shadow 0.2s',
+            ':hover': {
+                'transform': 'translateY(-5px)',
+                'boxShadow': '0 5px 15px rgba(0,0,0,0.1)',
+            }
+        }),
         
-        # Center - OR text
+        # In-control Data Card
         html.Div([
-            html.H4('OR', style={'textAlign': 'center'})
-        ], style={'width': '10%', 'display': 'flex', 'justifyContent': 'center', 'alignItems': 'center'}),
-        
-        # Right side - Predefined dataset buttons
-        html.Div([
-            html.H4('Use one of the pre-defined datasets', style={'textAlign': 'center', 'marginBottom': '15px'}),
             html.Div([
-                html.Button('In-Control Dataset', 
-                            id='btn-in-control', 
-                            n_clicks=0,
-                            style={
-                                'backgroundColor': '#28a745',
-                                'color': 'white',
-                                'border': 'none',
-                                'padding': '10px 20px',
-                                'margin': '0 10px',
-                                'borderRadius': '5px',
-                                'cursor': 'pointer',
-                                'fontWeight': '500',
-                                'minWidth': '180px',
-                            }),
-                html.Button('Out-of-Control Dataset', 
-                            id='btn-out-of-control', 
-                            n_clicks=0,
-                            style={
-                                'backgroundColor': '#dc3545',
-                                'color': 'white',
-                                'border': 'none',
-                                'padding': '10px 20px',
-                                'margin': '0 10px',
-                                'borderRadius': '5px',
-                                'cursor': 'pointer',
-                                'fontWeight': '500',
-                                'minWidth': '180px',
-                            }),
-            ], style={'display': 'flex', 'justifyContent': 'center', 'gap': '10px'}),
-        ], style={'flex': '1', 'paddingLeft': '20px'}),
-    ], style={'display': 'flex', 'justifyContent': 'space-between', 'alignItems': 'center', 'margin': '20px'}),
+                html.Img(src='/assets/chart_icon.svg', style={'height': '30px', 'margin': '10px'}),
+                html.Div("Try in-control data", style={'textAlign': 'center'})
+            ], style={'display': 'flex', 'flexDirection': 'column', 'alignItems': 'center', 'justifyContent': 'center'})
+        ], id='btn-in-control', style={
+            'backgroundColor': '#f8f9fa',
+            'borderRadius': '8px',
+            'padding': '10px',
+            'textAlign': 'center',
+            'boxShadow': '0 2px 4px rgba(0,0,0,0.1)',
+            'flex': '1',
+            'height': '100px',
+            'display': 'flex',
+            'alignItems': 'center',
+            'justifyContent': 'center',
+            'margin': '0 10px',
+            'cursor': 'pointer',
+            'transition': 'transform 0.2s, box-shadow 0.2s',
+            ':hover': {
+                'transform': 'translateY(-5px)',
+                'boxShadow': '0 5px 15px rgba(0,0,0,0.1)',
+            }
+        }),
+        
+        # Out-of-control Data Card
+        html.Div([
+            html.Div([
+                html.Img(src='/assets/warning_icon.svg', style={'height': '30px', 'margin': '10px'}),
+                html.Div("Try out-of-control data", style={'textAlign': 'center'})
+            ], style={'display': 'flex', 'flexDirection': 'column', 'alignItems': 'center', 'justifyContent': 'center'})
+        ], id='btn-out-of-control', style={
+            'backgroundColor': '#f8f9fa',
+            'borderRadius': '8px',
+            'padding': '10px',
+            'textAlign': 'center',
+            'boxShadow': '0 2px 4px rgba(0,0,0,0.1)',
+            'flex': '1',
+            'height': '100px',
+            'display': 'flex',
+            'alignItems': 'center',
+            'justifyContent': 'center',
+            'margin': '0 10px',
+            'cursor': 'pointer',
+            'transition': 'transform 0.2s, box-shadow 0.2s',
+            ':hover': {
+                'transform': 'translateY(-5px)',
+                'boxShadow': '0 5px 15px rgba(0,0,0,0.1)',
+            }
+        }),
+    ], style={'display': 'flex', 'justifyContent': 'space-between', 'margin': '20px auto', 'maxWidth': '800px'}),
 
     # Plot container (will be used later)
     html.Div(id='plot-container'),
@@ -335,7 +357,7 @@ def update_output(contents, in_control_clicks, out_control_clicks, filename, sto
     """Update the output based on user interactions"""
     if not ctx.triggered:
         # No triggers, return empty outputs
-        return html.Div('Upload a file or select a predefined dataset.'), html.Div(), None
+        return html.Div(), None, None
     
     trigger_id = ctx.triggered[0]['prop_id'].split('.')[0]
     
