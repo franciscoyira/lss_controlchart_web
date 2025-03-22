@@ -3,8 +3,9 @@ import io
 import polars as pl
 import plotly.express as px
 from plotly.graph_objects import Figure
-from dash import Dash, html, dcc, callback, Output, Input, State, dash_table
+from dash import Dash, html, dcc, callback, Output, Input, State, dash_table, ctx
 from flask import Flask
+import os
 
 # Initialize Flask and Dash
 server = Flask(__name__)
@@ -59,6 +60,39 @@ app.layout = html.Div([
             'boxShadow': '0 2px 4px rgba(74, 144, 226, 0.1)',
         }
     ),
+    
+    # Predefined dataset buttons
+    html.Div([
+        html.H4('Or use predefined datasets:', style={'textAlign': 'center', 'marginTop': '20px'}),
+        html.Div([
+            html.Button('In-Control Dataset', 
+                        id='btn-in-control', 
+                        n_clicks=0,
+                        style={
+                            'backgroundColor': '#28a745',
+                            'color': 'white',
+                            'border': 'none',
+                            'padding': '10px 20px',
+                            'margin': '10px',
+                            'borderRadius': '5px',
+                            'cursor': 'pointer',
+                            'fontWeight': '500',
+                        }),
+            html.Button('Out-of-Control Dataset', 
+                        id='btn-out-of-control', 
+                        n_clicks=0,
+                        style={
+                            'backgroundColor': '#dc3545',
+                            'color': 'white',
+                            'border': 'none',
+                            'padding': '10px 20px',
+                            'margin': '10px',
+                            'borderRadius': '5px',
+                            'cursor': 'pointer',
+                            'fontWeight': '500',
+                        }),
+        ], style={'display': 'flex', 'justifyContent': 'center', 'gap': '10px'}),
+    ]),
 
     # Plot container (will be used later)
     html.Div(id='plot-container'),
@@ -71,9 +105,23 @@ app.layout = html.Div([
     ),
 
     # Display the uploaded data info
-    html.Div(id='output-data-upload')
+    html.Div(id='output-data-upload'),
+    
+    # Store for the current data
+    dcc.Store(id='stored-data')
     
 ])
+
+# Function to read predefined datasets
+def load_predefined_dataset(filename):
+    """Load a predefined dataset from the data/test directory"""
+    file_path = os.path.join('data', 'test', filename)
+    try:
+        df = pl.read_csv(file_path, columns=[0])
+        return df
+    except Exception as e:
+        print(f"Error loading predefined dataset: {e}")
+        return None
 
 def parse_csv(contents):
     """Parse uploaded CSV file contents from Dash Upload component"""
@@ -201,19 +249,11 @@ def create_control_chart(df: pl.DataFrame, limits: dict) -> Figure:
     
     return fig
 
-@callback(
-    Output('plot-container', 'children'),
-    Input('upload-data', 'contents')
-)
-def update_plot(contents):
-    """Create and display a control chart plot when data is uploaded"""
-    if contents is None:
-        return html.Div('Upload a file to see the plot.')
-    
-    df = parse_csv(contents)
+def process_data(df):
+    """Process the dataframe for display and plotting"""
     if df is None:
-        return html.Div('Error processing the file for plotting.')
-    
+        return None, None
+        
     # Prepare dataframe
     df = df\
         .rename({df.columns[0]: "value"})\
@@ -222,39 +262,65 @@ def update_plot(contents):
     # Calculate limits once
     limits = calculate_control_limits(df)
     
-    # Add control rules and create plot
-    df = add_control_rules(df, limits)
-    fig = create_control_chart(df, limits)
+    # Add control rules
+    df_with_rules = add_control_rules(df, limits)
     
-    return dcc.Graph(figure=fig)
+    return df_with_rules, limits
 
 @callback(
-    Output('output-data-upload', 'children'),
-    Input('upload-data', 'contents'),
-    State('upload-data', 'filename')
+    [Output('plot-container', 'children'),
+     Output('output-data-upload', 'children'),
+     Output('stored-data', 'data')],
+    [Input('upload-data', 'contents'),
+     Input('btn-in-control', 'n_clicks'),
+     Input('btn-out-of-control', 'n_clicks')],
+    [State('upload-data', 'filename'),
+     State('stored-data', 'data')]
 )
-def show_uploaded_data(contents, filename):
-    """Update the output div when a file is uploaded"""
-    if contents is None:
-        return html.Div('No file uploaded yet.')
+def update_output(contents, in_control_clicks, out_control_clicks, filename, stored_data):
+    """Update the output based on user interactions"""
+    if not ctx.triggered:
+        # No triggers, return empty outputs
+        return html.Div('Upload a file or select a predefined dataset.'), html.Div(), None
     
-    df = parse_csv(contents)
+    trigger_id = ctx.triggered[0]['prop_id'].split('.')[0]
+    
+    df = None
+    dataset_name = None
+    
+    if trigger_id == 'upload-data' and contents is not None:
+        df = parse_csv(contents)
+        dataset_name = filename
+    elif trigger_id == 'btn-in-control' and in_control_clicks > 0:
+        df = load_predefined_dataset('in_control.csv')
+        dataset_name = 'in_control.csv'
+    elif trigger_id == 'btn-out-of-control' and out_control_clicks > 0:
+        df = load_predefined_dataset('out_of_control.csv')
+        dataset_name = 'out_of_control.csv'
+    else:
+        # No valid triggers, return current state
+        return html.Div('Upload a file or select a predefined dataset.'), html.Div(), stored_data
+    
     if df is None:
-        return html.Div('Error processing the file.')
+        return html.Div('Error processing the data.'), html.Div(), None
     
-    limits = calculate_control_limits(df)
-    df = add_control_rules(df, limits)
-    print("Columns in DataFrame:", df.columns)
-
-    return html.Div([
-        html.H5(f'Uploaded file: {filename}'),
-        html.H6(f'Number of observations: {df.shape[0]}'),
+    # Process the data
+    df_with_rules, limits = process_data(df)
+    
+    # Create the plot
+    fig = create_control_chart(df_with_rules, limits)
+    plot_component = dcc.Graph(figure=fig)
+    
+    # Create the data table
+    data_info = html.Div([
+        html.H5(f'Data source: {dataset_name}'),
+        html.H6(f'Number of observations: {df_with_rules.shape[0]}'),
         dash_table.DataTable(
-            data=df.to_dicts(),
-            columns=[{"name": i, "id": i} for i in df.columns],
+            data=df_with_rules.to_dicts(),
+            columns=[{"name": i, "id": i} for i in df_with_rules.columns],
             style_table={
                 'height': '300px',
-                'width': f'{100 * len(df.columns) + 30}px',
+                'width': f'{100 * len(df_with_rules.columns) + 30}px',
                 'overflowY': 'auto',
                 'overflowX': 'auto'
             },
@@ -269,6 +335,11 @@ def show_uploaded_data(contents, filename):
             }
         )
     ])
+    
+    # Store current data
+    stored_data = {'dataset_name': dataset_name}
+    
+    return plot_component, data_info, stored_data
 
 if __name__ == '__main__':
     app.run(debug=True) 
