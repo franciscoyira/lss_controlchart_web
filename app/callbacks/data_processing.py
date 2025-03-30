@@ -16,7 +16,10 @@ def register_callbacks(app):
         Output('empty-state', 'style'),
         Output('processed-data-store', 'data'),
         Output('download-container', 'style'),
-        Output('rule-boxes-container', 'children')],
+        Output('rule-boxes-container', 'children'),
+        Output('upload-card', 'className'),
+        Output('btn-in-control', 'className'),
+        Output('btn-out-of-control', 'className')],
         [Input('upload-data', 'contents'),
         Input('btn-in-control', 'n_clicks'),
         Input('btn-out-of-control', 'n_clicks')],
@@ -28,11 +31,24 @@ def register_callbacks(app):
         empty_state_style = {'margin': '40px auto', 'maxWidth': '800px'} # Default visible
         download_container_style = {'display': 'none'} # Default hidden
         
+        # Default classes for buttons
+        upload_class = 'option-card upload-card'
+        in_control_class = 'option-card'
+        out_control_class = 'option-card'
+        
         if not ctx.triggered:
             # No triggers, return empty outputs with visible empty state
-            return html.Div(), None, None, empty_state_style, None, download_container_style, create_rule_boxes()
+            return html.Div(), None, None, empty_state_style, None, download_container_style, create_rule_boxes(), upload_class, in_control_class, out_control_class
         
         trigger_id = ctx.triggered[0]['prop_id'].split('.')[0]
+        
+        # Set active class based on triggered button
+        if trigger_id == 'upload-data' and contents is not None:
+            upload_class += ' active'
+        elif trigger_id == 'btn-in-control' and in_control_clicks > 0:
+            in_control_class += ' active'
+        elif trigger_id == 'btn-out-of-control' and out_control_clicks > 0:
+            out_control_class += ' active'
         
         df = None
         dataset_name = None
@@ -48,10 +64,10 @@ def register_callbacks(app):
             dataset_name = 'out_of_control.csv'
         else:
             # No valid triggers, return current state with visible empty state
-            return html.Div('Upload a file or select a predefined dataset.'), html.Div(), stored_data, empty_state_style, None, download_container_style, create_rule_boxes()
+            return html.Div('Upload a file or select a predefined dataset.'), html.Div(), stored_data, empty_state_style, None, download_container_style, create_rule_boxes(), upload_class, in_control_class, out_control_class
         
         if df is None:
-            return html.Div('Error processing the data.'), html.Div(), None, empty_state_style, None, download_container_style, create_rule_boxes()
+            return html.Div('Error processing the data.'), html.Div(), None, empty_state_style, None, download_container_style, create_rule_boxes(), upload_class, in_control_class, out_control_class
         
         # Process the data
         df_with_rules, limits = process_data(df)
@@ -133,4 +149,4 @@ def register_callbacks(app):
         empty_state_style = {'display': 'none'}
         download_container_style = {'display': 'block', 'marginBottom': '10px'}
         
-        return plot_component, data_info, stored_data, empty_state_style, processed_data, download_container_style, create_rule_boxes()
+        return plot_component, data_info, stored_data, empty_state_style, processed_data, download_container_style, create_rule_boxes(), upload_class, in_control_class, out_control_class

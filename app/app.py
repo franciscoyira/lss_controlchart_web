@@ -1,26 +1,37 @@
-import base64
-import io
 import polars as pl
 import plotly.express as px
 from plotly.graph_objects import Figure
 from dash import Dash, html, dcc, callback, Output, Input, State, dash_table, ctx
 from flask import Flask
-import os
 import plotly.graph_objects as go
 
+# Import components separately to avoid circular imports
 from components.layout import create_layout
 from components.rule_boxes import create_rule_boxes
+import callbacks.rule_checkbox
 from callbacks.data_processing import register_callbacks
 from callbacks.download import register_download_callback
 
 # Initialize Flask and Dash
 server = Flask(__name__)
 app = Dash(__name__, server=server)
-app.layout = create_layout()
+
+layout = create_layout()
+
+# Add rule boxes to the layout after it's created
+rule_boxes_container = next(div for div in layout.children if getattr(div, 'id', None) == 'rule-boxes-container')
+if rule_boxes_container:
+    rule_boxes_grid = create_rule_boxes()
+    rule_boxes_container.children.append(rule_boxes_grid)
+
+# Add the rule-state-store div
+layout.children.append(html.Div(id='rule-state-store', style={'display': 'none'}))
+
+# Set the app layout
+app.layout = layout
 
 register_callbacks(app)
 register_download_callback(app)
-
 
 if __name__ == '__main__':
     app.run(debug=True) 

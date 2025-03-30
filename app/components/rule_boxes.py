@@ -64,12 +64,14 @@ def create_rule_boxes():
             html.Div([
                 dcc.Checklist(
                     options=[{'label': '', 'value': f'rule-{rule["number"]}'}],
-                    value=[],
+                    value=[f'rule-{rule["number"]}'],  # Default to checked
                     id=f'rule-check-{rule["number"]}',
-                    className='rule-checkbox'
+                    className='rule-checkbox',
+                    persistence=True,
+                    persistence_type='session',
                 )
             ], className='rule-checkbox-container')
-        ], className='rule-box')
+        ], className='rule-box', id=f'rule-box-{rule["number"]}')
         rule_boxes.append(rule_box)
-
+    
     return html.Div(rule_boxes, className='rule-boxes-grid') 

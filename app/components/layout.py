@@ -46,10 +46,10 @@ def create_layout():
                   className='empty-state-text')
         ], id='empty-state', className='empty-state'),
         
-        # Rule boxes container
+        # Rule boxes container - just create an empty container
         html.Div([
             html.H3("Nelson Rules for Control Charts", className="rule-section-title"),
-            html.Div(id='rule-boxes')
+            # rule_boxes will be added here in app.py
         ], id='rule-boxes-container', className='rule-boxes-container'),
         
         # Plot container
@@ -78,6 +78,8 @@ def create_layout():
         # Store for the current data
         dcc.Store(id='stored-data'),
         dcc.Store(id='processed-data-store'),
+        
+        # Note: rule-state-store will be added in app.py
         
         # Footer with references
         create_footer()
