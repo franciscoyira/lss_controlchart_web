@@ -36,11 +36,24 @@ def create_layout():
             ], id='btn-out-of-control', className='option-card'),
         ], className='data-options-container'),
 
+        # Empty state container - shows only when no data is loaded
+        html.Div([
+            html.Img(src='/assets/control-chart-icon.svg', className='empty-state-icon'),
+            html.H2('Welcome to the Control Chart Analyzer', className='empty-state-heading'),
+            html.P('Start by uploading your data or selecting one of the example datasets above.',
+                  className='empty-state-text'),
+            html.P('This tool will analyze your process data against the 8 Nelson rules to identify unusual variation.',
+                  className='empty-state-text')
+        ], id='empty-state', className='empty-state'),
+        
+        # Rule boxes container
+        html.Div([
+            html.H3("Nelson Rules for Control Charts", className="rule-section-title"),
+            html.Div(id='rule-boxes')
+        ], id='rule-boxes-container', className='rule-boxes-container'),
+        
         # Plot container
         html.Div(id='plot-container'),
-
-        # Rule boxes container
-        html.Div(id='rule-boxes-container', className='rule-boxes-container'),
 
         # Display the uploaded data info
         html.Div(id='output-data-upload'),
@@ -61,16 +74,6 @@ def create_layout():
             ),
             dcc.Download(id='download-dataframe-csv'),
         ], id='download-container', className='download-container'),
-
-        # Empty state container - shows only when no data is loaded
-        html.Div([
-            html.Img(src='/assets/control-chart-icon.svg', className='empty-state-icon'),
-            html.H2('Welcome to the Control Chart Analyzer', className='empty-state-heading'),
-            html.P('Start by uploading your data or selecting one of the example datasets above.',
-                  className='empty-state-text'),
-            html.P('This tool will analyze your process data against the 8 Nelson rules to identify unusual variation.',
-                  className='empty-state-text')
-        ], id='empty-state', className='empty-state'),
         
         # Store for the current data
         dcc.Store(id='stored-data'),
