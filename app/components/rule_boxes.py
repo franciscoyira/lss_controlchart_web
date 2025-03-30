@@ -1,4 +1,4 @@
-from dash import html
+from dash import html, dcc
 
 def create_rule_boxes():
     """Create the rule boxes component with illustrations and descriptions"""
@@ -60,7 +60,15 @@ def create_rule_boxes():
             html.Div([
                 html.H4(f"Rule {rule['number']}: {rule['title']}", className='rule-title'),
                 html.P(rule['description'], className='rule-description')
-            ], className='rule-content')
+            ], className='rule-content'),
+            html.Div([
+                dcc.Checklist(
+                    options=[{'label': '', 'value': f'rule-{rule["number"]}'}],
+                    value=[],
+                    id=f'rule-check-{rule["number"]}',
+                    className='rule-checkbox'
+                )
+            ], className='rule-checkbox-container')
         ], className='rule-box')
         rule_boxes.append(rule_box)
 
