@@ -20,13 +20,12 @@ app.layout = html.Div([
     html.Div([
         # Upload CSV Card
         html.Div([
-            html.Div([
-                html.Img(src='/assets/upload_icon.svg', className='card-icon'),
-                html.Div("Upload your own CSV")
-            ], className='card-content'),
             dcc.Upload(
                 id='upload-data',
-                children=html.Div([]),
+                children=html.Div([
+                    html.Img(src='/assets/upload_icon.svg', className='card-icon'),
+                    html.Div("Upload your own CSV")
+                ], className='card-content'),
                 className='upload-component'
             ),
         ], id='upload-card', className='option-card upload-card'),
@@ -50,6 +49,9 @@ app.layout = html.Div([
 
     # Plot container
     html.Div(id='plot-container'),
+
+    # Rule boxes container
+    html.Div(id='rule-boxes-container', className='rule-boxes-container'),
 
     # Display the uploaded data info
     html.Div(id='output-data-upload'),
@@ -376,13 +378,80 @@ def process_data(df):
     
     return df_with_rules, limits
 
+def create_rule_boxes():
+    """Create the rule boxes component with illustrations and descriptions"""
+    rules = [
+        {
+            'number': 1,
+            'title': 'Point Beyond 3 Sigma',
+            'description': 'A single point falls outside the 3-sigma control limits',
+            'icon': '/assets/rule1.svg'
+        },
+        {
+            'number': 2,
+            'title': 'Nine Points Same Side',
+            'description': 'Nine consecutive points fall on the same side of the centerline',
+            'icon': '/assets/rule2.svg'
+        },
+        {
+            'number': 3,
+            'title': 'Six Points Trending',
+            'description': 'Six points in a row steadily increasing or decreasing',
+            'icon': '/assets/rule3.svg'
+        },
+        {
+            'number': 4,
+            'title': 'Fourteen Points Alternating',
+            'description': 'Fourteen points in a row alternating up and down',
+            'icon': '/assets/rule4.svg'
+        },
+        {
+            'number': 5,
+            'title': 'Two of Three in Zone A',
+            'description': 'Two out of three consecutive points fall in Zone A or beyond',
+            'icon': '/assets/rule5.svg'
+        },
+        {
+            'number': 6,
+            'title': 'Four of Five in Zone B',
+            'description': 'Four out of five consecutive points fall in Zone B or beyond',
+            'icon': '/assets/rule6.svg'
+        },
+        {
+            'number': 7,
+            'title': 'Fifteen Points in Zone C',
+            'description': 'Fifteen consecutive points fall within Zone C',
+            'icon': '/assets/rule7.svg'
+        },
+        {
+            'number': 8,
+            'title': 'Eight Points Outside Zone C',
+            'description': 'Eight consecutive points fall outside Zone C',
+            'icon': '/assets/rule8.svg'
+        }
+    ]
+
+    rule_boxes = []
+    for rule in rules:
+        rule_box = html.Div([
+            html.Img(src=rule['icon'], className='rule-icon'),
+            html.Div([
+                html.H4(f"Rule {rule['number']}: {rule['title']}", className='rule-title'),
+                html.P(rule['description'], className='rule-description')
+            ], className='rule-content')
+        ], className='rule-box')
+        rule_boxes.append(rule_box)
+
+    return html.Div(rule_boxes, className='rule-boxes-grid')
+
 @callback(
     [Output('plot-container', 'children'),
      Output('output-data-upload', 'children'),
      Output('stored-data', 'data'),
      Output('empty-state', 'style'),
      Output('processed-data-store', 'data'),
-     Output('download-container', 'style')],
+     Output('download-container', 'style'),
+     Output('rule-boxes-container', 'children')],
     [Input('upload-data', 'contents'),
      Input('btn-in-control', 'n_clicks'),
      Input('btn-out-of-control', 'n_clicks')],
@@ -396,7 +465,7 @@ def update_output(contents, in_control_clicks, out_control_clicks, filename, sto
     
     if not ctx.triggered:
         # No triggers, return empty outputs with visible empty state
-        return html.Div(), None, None, empty_state_style, None, download_container_style
+        return html.Div(), None, None, empty_state_style, None, download_container_style, create_rule_boxes()
     
     trigger_id = ctx.triggered[0]['prop_id'].split('.')[0]
     
@@ -414,10 +483,10 @@ def update_output(contents, in_control_clicks, out_control_clicks, filename, sto
         dataset_name = 'out_of_control.csv'
     else:
         # No valid triggers, return current state with visible empty state
-        return html.Div('Upload a file or select a predefined dataset.'), html.Div(), stored_data, empty_state_style, None, download_container_style
+        return html.Div('Upload a file or select a predefined dataset.'), html.Div(), stored_data, empty_state_style, None, download_container_style, create_rule_boxes()
     
     if df is None:
-        return html.Div('Error processing the data.'), html.Div(), None, empty_state_style, None, download_container_style
+        return html.Div('Error processing the data.'), html.Div(), None, empty_state_style, None, download_container_style, create_rule_boxes()
     
     # Process the data
     df_with_rules, limits = process_data(df)
@@ -499,7 +568,7 @@ def update_output(contents, in_control_clicks, out_control_clicks, filename, sto
     empty_state_style = {'display': 'none'}
     download_container_style = {'display': 'block', 'marginBottom': '10px'}
     
-    return plot_component, data_info, stored_data, empty_state_style, processed_data, download_container_style
+    return plot_component, data_info, stored_data, empty_state_style, processed_data, download_container_style, create_rule_boxes()
 
 @callback(
     Output('download-dataframe-csv', 'data'),
@@ -519,8 +588,17 @@ def download_csv(n_clicks, processed_data, stored_data):
     # Generate filename based on the original dataset name
     filename = "rules_" + (stored_data.get('dataset_name', 'dataset') if stored_data else 'dataset')
     
-    # Return the CSV data
-    return dcc.send_data_frame(df.to_pandas(), filename, index=False)
+    # Use StringIO to capture the CSV output
+    csv_buffer = io.StringIO()
+    df.write_csv(csv_buffer)
+    csv_string = csv_buffer.getvalue()
+    
+    # Return CSV data directly
+    return dict(
+        content=csv_string,
+        filename=filename,
+        type='text/csv'
+    )
 
 if __name__ == '__main__':
     app.run(debug=True) 
