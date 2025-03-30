@@ -1,0 +1,7 @@
+{
+  "python.analysis.extraPaths": [
+    "${workspaceFolder}",
+    "${workspaceFolder}/app"
+  ],
+  "python.analysis.autoSearchPaths": true
+}

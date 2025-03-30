@@ -8,118 +8,15 @@ from flask import Flask
 import os
 import plotly.graph_objects as go
 
+from components.layout import create_layout
+from components.rule_boxes import create_rule_boxes
+
 # Initialize Flask and Dash
 server = Flask(__name__)
 app = Dash(__name__, server=server)
 
-# Define the layout
-app.layout = html.Div([
-    html.H1('Lean Six Sigma - Control Chart Rules Detection', className='app-header'),
-    
-    # Card-style layout for data selection options
-    html.Div([
-        # Upload CSV Card
-        html.Div([
-            dcc.Upload(
-                id='upload-data',
-                children=html.Div([
-                    html.Img(src='/assets/upload_icon.svg', className='card-icon'),
-                    html.Div("Upload your own CSV")
-                ], className='card-content'),
-                className='upload-component'
-            ),
-        ], id='upload-card', className='option-card upload-card'),
-        
-        # In-control Data Card
-        html.Div([
-            html.Div([
-                html.Img(src='/assets/chart_icon.svg', className='card-icon'),
-                html.Div("Try in-control data")
-            ], className='card-content')
-        ], id='btn-in-control', className='option-card'),
-        
-        # Out-of-control Data Card
-        html.Div([
-            html.Div([
-                html.Img(src='/assets/warning_icon.svg', className='card-icon'),
-                html.Div("Try out-of-control data")
-            ], className='card-content')
-        ], id='btn-out-of-control', className='option-card'),
-    ], className='data-options-container'),
-
-    # Plot container
-    html.Div(id='plot-container'),
-
-    # Rule boxes container
-    html.Div(id='rule-boxes-container', className='rule-boxes-container'),
-
-    # Display the uploaded data info
-    html.Div(id='output-data-upload'),
-    
-    # Download buttons
-    html.Div([
-        html.Button(
-            'Download Plot',
-            id='btn-download',
-            className='hidden'
-        ),
-        html.Button([
-            html.Img(src='/assets/download_icon.svg', className='button-icon'),
-            'Download Data with Rules'
-        ],
-            id='btn-download-data',
-            className='action-button'
-        ),
-        dcc.Download(id='download-dataframe-csv'),
-    ], id='download-container', className='download-container'),
-
-    # Empty state container - shows only when no data is loaded
-    html.Div([
-        html.Img(src='/assets/control-chart-icon.svg', className='empty-state-icon'),
-        html.H2('Welcome to the Control Chart Analyzer', className='empty-state-heading'),
-        html.P('Start by uploading your data or selecting one of the example datasets above.',
-              className='empty-state-text'),
-        html.P('This tool will analyze your process data against the 8 Nelson rules to identify unusual variation.',
-              className='empty-state-text')
-    ], id='empty-state', className='empty-state'),
-    
-    # Store for the current data
-    dcc.Store(id='stored-data'),
-    dcc.Store(id='processed-data-store'),
-    
-    #  sources footnote
-    html.Div([
-        html.Hr(className='footer-hr'),
-        html.Div([
-            # References section with updated heading style
-            html.H6("References", className='references-heading'),
-            html.P([
-                "Nelson, L.S. (1984). The Shewhart Control Chart—Tests for Special Causes. ",
-                html.I("Journal of Quality Technology"), 
-                " 16(4), 238-239. ", 
-                html.A("https://doi.org/10.1080/00224065.1984.11978921", 
-                       href="https://doi.org/10.1080/00224065.1984.11978921", 
-                       target="_blank"),
-                html.Br(),
-                "Office of the Secretary of Defense, Quality Management Office (1989). Small Business Guidebook to Quality Management, pp. 45-46, 63-64. ",
-                html.A("https://apps.dtic.mil/sti/pdfs/ADA310869.pdf", 
-                       href="https://apps.dtic.mil/sti/pdfs/ADA310869.pdf", 
-                       target="_blank")
-            ], className='references-text'),
-            
-            # Creator attribution with link to portfolio
-            html.Div([
-                html.Span("Made by ", className='creator-text'),
-                html.A("Francisco Yirá", 
-                       href="https://cv.franciscoyira.com/", 
-                       target="_blank",
-                       className='creator-link'),
-                html.Span(" in Toronto, Canada ", className='creator-text'),
-                html.Span("🍁", className='emoji')
-            ], className='creator-attribution')
-        ], className='footer-content')
-    ], className='app-footer')
-])
+# Define the layout using the imported function
+app.layout = create_layout()
 
 # Function to read predefined datasets
 def load_predefined_dataset(filename):
@@ -377,72 +274,6 @@ def process_data(df):
     df_with_rules = add_control_rules(df, limits)
     
     return df_with_rules, limits
-
-def create_rule_boxes():
-    """Create the rule boxes component with illustrations and descriptions"""
-    rules = [
-        {
-            'number': 1,
-            'title': 'Point Beyond 3 Sigma',
-            'description': 'A single point falls outside the 3-sigma control limits',
-            'icon': '/assets/rule1.svg'
-        },
-        {
-            'number': 2,
-            'title': 'Nine Points Same Side',
-            'description': 'Nine consecutive points fall on the same side of the centerline',
-            'icon': '/assets/rule2.svg'
-        },
-        {
-            'number': 3,
-            'title': 'Six Points Trending',
-            'description': 'Six points in a row steadily increasing or decreasing',
-            'icon': '/assets/rule3.svg'
-        },
-        {
-            'number': 4,
-            'title': 'Fourteen Points Alternating',
-            'description': 'Fourteen points in a row alternating up and down',
-            'icon': '/assets/rule4.svg'
-        },
-        {
-            'number': 5,
-            'title': 'Two of Three in Zone A',
-            'description': 'Two out of three consecutive points fall in Zone A or beyond',
-            'icon': '/assets/rule5.svg'
-        },
-        {
-            'number': 6,
-            'title': 'Four of Five in Zone B',
-            'description': 'Four out of five consecutive points fall in Zone B or beyond',
-            'icon': '/assets/rule6.svg'
-        },
-        {
-            'number': 7,
-            'title': 'Fifteen Points in Zone C',
-            'description': 'Fifteen consecutive points fall within Zone C',
-            'icon': '/assets/rule7.svg'
-        },
-        {
-            'number': 8,
-            'title': 'Eight Points Outside Zone C',
-            'description': 'Eight consecutive points fall outside Zone C',
-            'icon': '/assets/rule8.svg'
-        }
-    ]
-
-    rule_boxes = []
-    for rule in rules:
-        rule_box = html.Div([
-            html.Img(src=rule['icon'], className='rule-icon'),
-            html.Div([
-                html.H4(f"Rule {rule['number']}: {rule['title']}", className='rule-title'),
-                html.P(rule['description'], className='rule-description')
-            ], className='rule-content')
-        ], className='rule-box')
-        rule_boxes.append(rule_box)
-
-    return html.Div(rule_boxes, className='rule-boxes-grid')
 
 @callback(
     [Output('plot-container', 'children'),
