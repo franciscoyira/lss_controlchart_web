@@ -17,8 +17,19 @@ def calculate_control_limits(df: pl.DataFrame) -> dict:
     }
 
 
-def add_control_rules(df: pl.DataFrame, limits: dict) -> pl.DataFrame:
-    """Add control chart rules to the dataframe"""
+def add_control_rules(df: pl.DataFrame, limits: dict, active_rules: dict = None) -> pl.DataFrame:
+    """Add control chart rules to the dataframe
+    
+    Args:
+        df: DataFrame with data
+        limits: Dictionary with control limits
+        active_rules: Dictionary with active rules {1: True/False, 2: True/False, ...}
+                      If None, all rules are active
+    """
+    # If active_rules is None, assume all rules are active
+    if active_rules is None:
+        active_rules = {i: True for i in range(1, 9)}
+    
     val_diff = pl.col('value').diff()
     in_zone_c = pl.col('value').is_between(limits['lsl_1'], limits['usl_1'])
 
@@ -62,37 +73,54 @@ def add_control_rules(df: pl.DataFrame, limits: dict) -> pl.DataFrame:
     rule_8_flag = pl.when(~in_zone_c).then(1).otherwise(0)
     rule_8_counter = rule_8_flag.rolling_sum(window_size=8)
 
-    return df.with_columns(
-        rule_1 = pl.when(rule_1_counter > 0)
-            .then(pl.lit("Broken"))
-            .otherwise(pl.lit("OK")),
-        rule_2 = pl.when((rule_2_counter.abs() == 9))
-            .then(pl.lit("Broken"))
-            .otherwise(pl.lit("OK")),
-        rule_3 = pl.when(rule_3_counter == 6)
-            .then(pl.lit("Broken"))
-            .otherwise(pl.lit("OK")),
-        rule_4 = pl.when(rule_4_counter == 14)
-            .then(pl.lit("Broken"))
-            .otherwise(pl.lit("OK")),
-        rule_5 = pl.when((rule_5_counter_upper >= 2) | (rule_5_counter_lower >= 2))
-            .then(pl.lit("Broken"))
-            .otherwise(pl.lit("OK")),
-        rule_6 = pl.when(rule_6_counter == 4)
-            .then(pl.lit("Broken"))
-            .otherwise(pl.lit("OK")),
-        rule_7 = pl.when(rule_7_counter == 15)
-            .then(pl.lit("Broken"))
-            .otherwise(pl.lit("OK")),
-        rule_8 = pl.when(rule_8_counter == 8)
-            .then(pl.lit("Broken"))
-            .otherwise(pl.lit("OK"))
-    )
+    # Base columns with all rules set to OK
+    rule_columns = {
+        'rule_1': pl.lit("OK"),
+        'rule_2': pl.lit("OK"),
+        'rule_3': pl.lit("OK"),
+        'rule_4': pl.lit("OK"),
+        'rule_5': pl.lit("OK"),
+        'rule_6': pl.lit("OK"),
+        'rule_7': pl.lit("OK"),
+        'rule_8': pl.lit("OK")
+    }
+    
+    # Only apply active rules
+    if active_rules.get(1, True):
+        rule_columns['rule_1'] = pl.when(rule_1_counter > 0).then(pl.lit("Broken")).otherwise(pl.lit("OK"))
+    
+    if active_rules.get(2, True):
+        rule_columns['rule_2'] = pl.when((rule_2_counter.abs() == 9)).then(pl.lit("Broken")).otherwise(pl.lit("OK"))
+    
+    if active_rules.get(3, True):
+        rule_columns['rule_3'] = pl.when(rule_3_counter == 6).then(pl.lit("Broken")).otherwise(pl.lit("OK"))
+    
+    if active_rules.get(4, True):
+        rule_columns['rule_4'] = pl.when(rule_4_counter == 14).then(pl.lit("Broken")).otherwise(pl.lit("OK"))
+    
+    if active_rules.get(5, True):
+        rule_columns['rule_5'] = pl.when((rule_5_counter_upper >= 2) | (rule_5_counter_lower >= 2)).then(pl.lit("Broken")).otherwise(pl.lit("OK"))
+    
+    if active_rules.get(6, True):
+        rule_columns['rule_6'] = pl.when(rule_6_counter == 4).then(pl.lit("Broken")).otherwise(pl.lit("OK"))
+    
+    if active_rules.get(7, True):
+        rule_columns['rule_7'] = pl.when(rule_7_counter == 15).then(pl.lit("Broken")).otherwise(pl.lit("OK"))
+    
+    if active_rules.get(8, True):
+        rule_columns['rule_8'] = pl.when(rule_8_counter == 8).then(pl.lit("Broken")).otherwise(pl.lit("OK"))
+
+    return df.with_columns(**rule_columns)
 
 
 
-def process_data(df):
-    """Process the dataframe for display and plotting"""
+def process_data(df, active_rules=None):
+    """Process the dataframe for display and plotting
+    
+    Args:
+        df: DataFrame with data
+        active_rules: Dictionary with active rules {1: True/False, 2: True/False, ...}
+    """
     if df is None:
         return None, None
         
@@ -103,6 +131,6 @@ def process_data(df):
     limits = calculate_control_limits(df)
     
     # Add control rules
-    df_with_rules = add_control_rules(df, limits)
+    df_with_rules = add_control_rules(df, limits, active_rules)
     
     return df_with_rules, limits

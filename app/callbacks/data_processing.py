@@ -1,11 +1,13 @@
 from dash import callback, Output, Input, State, html, dcc, dash_table, ctx
 import plotly.graph_objects as go
 from plotly.graph_objects import Figure
+import json
 # Import your utility functions
 from components.rule_boxes import create_rule_boxes
 from utils.data_loader import parse_csv, load_predefined_dataset
 from utils.data_processor import process_data, add_control_rules, calculate_control_limits
 from utils.chart_creator import create_control_chart
+from callbacks.rule_checkbox import get_active_rules
 
 
 def register_callbacks(app):
@@ -22,11 +24,12 @@ def register_callbacks(app):
         Output('btn-out-of-control', 'className')],
         [Input('upload-data', 'contents'),
         Input('btn-in-control', 'n_clicks'),
-        Input('btn-out-of-control', 'n_clicks')],
+        Input('btn-out-of-control', 'n_clicks'),
+        Input('rule-state-store', 'children')],
         [State('upload-data', 'filename'),
         State('stored-data', 'data')]
     )
-    def update_output(contents, in_control_clicks, out_control_clicks, filename, stored_data):
+    def update_output(contents, in_control_clicks, out_control_clicks, rule_state_json, filename, stored_data):
         """Update the output based on user interactions"""
         empty_state_style = {'margin': '40px auto', 'maxWidth': '800px'} # Default visible
         download_container_style = {'display': 'none'} # Default hidden
@@ -35,6 +38,9 @@ def register_callbacks(app):
         upload_class = 'option-card upload-card'
         in_control_class = 'option-card'
         out_control_class = 'option-card'
+        
+        # Get active rules from the rule state
+        active_rules = get_active_rules(rule_state_json)
         
         if not ctx.triggered:
             # No triggers, return empty outputs with visible empty state
@@ -53,7 +59,19 @@ def register_callbacks(app):
         df = None
         dataset_name = None
         
-        if trigger_id == 'upload-data' and contents is not None:
+        # If the rule state changed, but we have stored data, reprocess it
+        if trigger_id == 'rule-state-store' and stored_data and 'dataset_name' in stored_data:
+            dataset_name = stored_data['dataset_name']
+            if dataset_name.startswith('in_control'):
+                df = load_predefined_dataset('in_control.csv')
+            elif dataset_name.startswith('out_of_control'):
+                df = load_predefined_dataset('out_of_control.csv')
+            else:
+                # Need to ask the user to reload their custom data since we can't access it after upload
+                return html.Div([
+                    html.P("To apply rule changes to your custom data, please re-upload your file.", className="warning-text")
+                ]), None, stored_data, {'display': 'none'}, None, {'display': 'none'}, create_rule_boxes(), upload_class, in_control_class, out_control_class
+        elif trigger_id == 'upload-data' and contents is not None:
             df = parse_csv(contents)
             dataset_name = filename
         elif trigger_id == 'btn-in-control' and in_control_clicks > 0:
@@ -69,11 +87,11 @@ def register_callbacks(app):
         if df is None:
             return html.Div('Error processing the data.'), html.Div(), None, empty_state_style, None, download_container_style, create_rule_boxes(), upload_class, in_control_class, out_control_class
         
-        # Process the data
-        df_with_rules, limits = process_data(df)
+        # Process the data with active rules
+        df_with_rules, limits = process_data(df, active_rules)
         
-        # Create the plot
-        fig = create_control_chart(df_with_rules, limits)
+        # Create the plot with active rules
+        fig = create_control_chart(df_with_rules, limits, active_rules)
         plot_component = dcc.Graph(figure=fig)
         
         # Create the data table
@@ -85,7 +103,10 @@ def register_callbacks(app):
             html.H6(f'Number of observations: {df_with_rules.shape[0]}'),
             dash_table.DataTable(
                 data=df_with_rules.drop("index").to_dicts(),
-                columns=[{"name": i, "id": i} for i in df_with_rules.drop("index").columns],
+                columns=[
+                    {"name": i, "id": i} for i in df_with_rules.drop("index").columns
+                    if not i.startswith('rule_') or active_rules.get(int(i.split('_')[1]), True)
+                ],
                 style_table={
                     'height': '300px',
                     'maxWidth': '100%',
@@ -110,11 +131,11 @@ def register_callbacks(app):
                 style_data={'border': '1px solid #e9ecef'},
                 style_data_conditional=[
                     {
-                        'if': {'filter_query': '{rule_1} = "Broken" || {rule_2} = "Broken" || {rule_3} = "Broken" || {rule_4} = "Broken" || {rule_5} = "Broken" || {rule_6} = "Broken" || {rule_7} = "Broken" || {rule_8} = "Broken"'},
+                        'if': {'filter_query': ' || '.join([f'{{{c}}} = "Broken"' for c in df_with_rules.columns if c.startswith('rule_') and active_rules.get(int(c.split('_')[1]), True)])},
                         'backgroundColor': 'rgba(255, 240, 240, 0.7)'
                     },
                     {
-                        'if': {'filter_query': '{rule_1} = "Broken" || {rule_2} = "Broken" || {rule_3} = "Broken" || {rule_4} = "Broken" || {rule_5} = "Broken" || {rule_6} = "Broken" || {rule_7} = "Broken" || {rule_8} = "Broken"', 'column_id': 'value'},
+                        'if': {'filter_query': ' || '.join([f'{{{c}}} = "Broken"' for c in df_with_rules.columns if c.startswith('rule_') and active_rules.get(int(c.split('_')[1]), True)]), 'column_id': 'value'},
                         'fontWeight': 'bold',
                         'color': '#dc3545'
                     }
@@ -124,7 +145,7 @@ def register_callbacks(app):
                         'backgroundColor': 'rgba(220, 53, 69, 0.1)',
                         'color': '#dc3545',
                         'fontWeight': 'bold'
-                    } for c in [col for col in df_with_rules.columns if col.startswith('rule_')]
+                    } for c in [col for col in df_with_rules.columns if col.startswith('rule_') and active_rules.get(int(col.split('_')[1]), True)]
                 ],
                 style_header={
                     'backgroundColor': '#f8f9fa',

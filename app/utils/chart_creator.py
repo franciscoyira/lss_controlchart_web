@@ -4,10 +4,33 @@ from plotly.graph_objects import Figure
 import plotly.graph_objects as go
 
 
-def create_control_chart(df: pl.DataFrame, limits: dict) -> Figure:
-    """Create a control chart plot with all control limits"""
+def create_control_chart(df: pl.DataFrame, limits: dict, active_rules: dict = None) -> Figure:
+    """Create a control chart plot with all control limits
+    
+    Args:
+        df: DataFrame with data
+        limits: Dictionary with control limits
+        active_rules: Dictionary with active rules {1: True/False, 2: True/False, ...}
+                      If None, all rules are active
+    """
+    # If active_rules is None, assume all rules are active
+    if active_rules is None:
+        active_rules = {i: True for i in range(1, 9)}
+        
     # Create base plot
     fig = px.line(df, x='index', y='value', title='Control Chart Plot')
+    
+    # Calculate descriptive statistics
+    stats = {
+        'Mean': df['value'].mean(),
+        'Median': df['value'].median(),
+        'StdDev': df['value'].std(),
+        'Min': df['value'].min(),
+        'Max': df['value'].max(),
+        'Range': df['value'].max() - df['value'].min(),
+        'Count': len(df),
+        'CP': (limits['ucl'] - limits['lcl']) / (6 * df['value'].std()) if df['value'].std() > 0 else float('nan')
+    }
     
     # Add control limit lines
     fig.add_hline(y=limits['mean'], line_dash="dash", line_color="grey", annotation_text="Mean", annotation=dict(font_color="grey"))
@@ -80,7 +103,7 @@ def create_control_chart(df: pl.DataFrame, limits: dict) -> Figure:
     colors = []
     
     # Identify broken rules for each point
-    rule_columns = [col for col in df.columns if col.startswith('rule_')]
+    rule_columns = [f'rule_{i}' for i in range(1, 9) if active_rules.get(i, True)]
     
     for row in df.iter_rows(named=True):
         broken_rules = []
@@ -119,12 +142,41 @@ def create_control_chart(df: pl.DataFrame, limits: dict) -> Figure:
             )
         )
     
-    # Update layout
+    # Update layout to add more height for annotations
     fig.update_layout(
         xaxis_title="Observation",
         yaxis_title="Value",
         showlegend=False,
-        hovermode='closest'
+        hovermode='closest',
+        height=700,  # Increase height to accommodate stats better
+        margin=dict(b=200)  # Increase bottom margin for stats
+    )
+    
+    # Add descriptive statistics at the bottom
+    stat_text = "<br>".join([
+        f"<b>Process Statistics:</b>",
+        f"Mean: {stats['Mean']:.3f}",
+        f"Std Dev: {stats['StdDev']:.3f}",
+        f"UCL: {limits['ucl']:.3f}, LCL: {limits['lcl']:.3f}",
+        f"Range: {stats['Range']:.3f} (Min: {stats['Min']:.3f}, Max: {stats['Max']:.3f})",
+        f"Sample Count: {stats['Count']}",
+        f"Process Capability (Cp): {stats['CP']:.3f}"
+    ])
+    
+    fig.add_annotation(
+        xref='paper',
+        yref='paper',
+        x=0.5,
+        y=-0.45,  # Move the annotation lower
+        text=stat_text,
+        showarrow=False,
+        font=dict(size=12),
+        align='center',
+        bordercolor='black',
+        borderwidth=1,
+        borderpad=4,
+        bgcolor='white',
+        opacity=0.8
     )
     
     return fig
