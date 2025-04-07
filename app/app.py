@@ -18,11 +18,11 @@ logger = logging.getLogger(__name__)
 
 try:
     # Import components separately to avoid circular imports
-    from components.layout import create_layout
-    from components.rule_boxes import create_rule_boxes
-    import callbacks.rule_checkbox
-    from callbacks.data_processing import register_callbacks
-    from callbacks.download import register_download_callback
+    from app.components.layout import create_layout
+    from app.components.rule_boxes import create_rule_boxes
+    import app.callbacks.rule_checkbox
+    from app.callbacks.data_processing import register_callbacks
+    from app.callbacks.download import register_download_callback
 
     # Initialize Flask and Dash
     server = Flask(__name__)
