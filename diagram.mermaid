@@ -1,0 +1,60 @@
+flowchart TD
+    subgraph "Project Root"
+        app["app/ - Main application folder"]
+        vscode[".vscode/ - VS Code configuration"]
+        gitignore[".gitignore - Ignores files from version control"]
+        readme["README.md - Project documentation"]
+        req["requirements.txt - Python dependencies"]
+    end
+
+    subgraph "app/ folder"
+        init["__init__.py - Package initialization"]
+        app_py["app.py - Main application entry point
+        Initializes Flask and Dash, sets up the layout"]
+        
+        comps["components/ - UI components"]
+        cbacks["callbacks/ - Event handlers"]
+        utils["utils/ - Helper functions"]
+        assets["assets/ - Static files (CSS, JS, images)"]
+    end
+
+    subgraph "components/ folder"
+        comp_init["__init__.py - Package initialization"]
+        layout["layout.py - Creates main UI structure"]
+        rule_boxes["rule_boxes.py - Creates control rule UI elements"]
+    end
+
+    subgraph "callbacks/ folder"
+        cb_init["__init__.py - Package initialization"]
+        data_proc["data_processing.py - Handles data transformation"]
+        rule_cb["rule_checkbox.py - Handles rule selection"]
+        download["download.py - Manages data downloads"]
+    end
+
+    subgraph "utils/ folder"
+        util_init["__init__.py - Package initialization"]
+        data_loader["data_loader.py - Loads data from files"]
+        data_processor["data_processor.py - Processes data and calculates statistics"]
+        chart_creator["chart_creator.py - Creates Plotly charts"]
+    end
+
+    subgraph "assets/ folder"
+        css["CSS files - Styling for the application"]
+        js["JavaScript files - Client-side interactivity"]
+        img["Images - Icons and visual elements"]
+    end
+
+    app_py --> comps
+    app_py --> cbacks
+    cbacks --> utils
+    comps --> layout
+    comps --> rule_boxes
+    utils --> data_loader
+    utils --> data_processor
+    utils --> chart_creator
+
+    app --> app_py
+    app --> comps
+    app --> cbacks
+    app --> utils
+    app --> assets
