@@ -1,0 +1,7 @@
+recursive-include app/assets *
+recursive-include app/components *
+recursive-include app/callbacks *
+recursive-include app/utils *
+recursive-include data *
+include requirements.txt
+include Procfile 
