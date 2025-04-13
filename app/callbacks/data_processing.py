@@ -5,7 +5,7 @@ import json
 # Import your utility functions
 from components.rule_boxes import create_rule_boxes
 from utils.data_loader import parse_csv, load_predefined_dataset
-from utils.data_processor import process_data, add_control_rules, calculate_control_limits
+from utils.data_processor import process_data
 from utils.chart_creator import create_control_chart
 from callbacks.rule_checkbox import get_active_rules
 
@@ -87,10 +87,10 @@ def register_callbacks(app):
             return html.Div('Error processing the data.'), html.Div(style={'display': 'none'}), None, empty_state_style, None, download_container_style, create_rule_boxes(), upload_class, in_control_class, out_control_class
         
         # Process the data with active rules
-        df_with_rules, limits, stats = process_data(df, active_rules)
+        df_with_rules, stats = process_data(df, active_rules)
         
         # Create the plot with active rules
-        fig = create_control_chart(df_with_rules, limits, stats, active_rules)
+        fig = create_control_chart(df_with_rules, stats, active_rules)
         plot_component = dcc.Graph(figure=fig)
         
         # Create the data table

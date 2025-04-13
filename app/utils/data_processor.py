@@ -1,7 +1,7 @@
 import polars as pl
 
-def calculate_control_limits(df: pl.DataFrame) -> dict:
-    """Calculate all control limits from the data"""
+def calculate_control_stats(df: pl.DataFrame) -> dict:
+    """Calculate all control stats from the data"""
     mean = df['value'].mean()
     std_dev = df['value'].std()
     
@@ -17,12 +17,12 @@ def calculate_control_limits(df: pl.DataFrame) -> dict:
     }
 
 
-def add_control_rules(df: pl.DataFrame, limits: dict, active_rules: dict = None) -> pl.DataFrame:
+def add_control_rules(df: pl.DataFrame, stats: dict, active_rules: dict = None) -> pl.DataFrame:
     """Add control chart rules to the dataframe
     
     Args:
         df: DataFrame with data
-        limits: Dictionary with control limits
+        stats: Dictionary with control stats
         active_rules: Dictionary with active rules {1: True/False, 2: True/False, ...}
                       If None, all rules are active
     """
@@ -31,13 +31,13 @@ def add_control_rules(df: pl.DataFrame, limits: dict, active_rules: dict = None)
         active_rules = {i: True for i in range(1, 9)}
     
     val_diff = pl.col('value').diff()
-    in_zone_c = pl.col('value').is_between(limits['lzl'], limits['uzl'])
+    in_zone_c = pl.col('value').is_between(stats['lzl'], stats['uzl'])
 
 
-    rule_1_counter = pl.when(pl.col("value").is_between(limits['lcl'], limits['ucl'])).then(0).otherwise(1)
+    rule_1_counter = pl.when(pl.col("value").is_between(stats['lcl'], stats['ucl'])).then(0).otherwise(1)
 
     # Rule 2: 9 consecutive points on the same 
-    mean_diff = (pl.col("value") - limits['mean'])
+    mean_diff = (pl.col("value") - stats['mean'])
     mean_diff_sign = mean_diff.sign()
     rule_2_counter = mean_diff_sign.rolling_sum(window_size=9)
 
@@ -55,17 +55,17 @@ def add_control_rules(df: pl.DataFrame, limits: dict, active_rules: dict = None)
     
     # Rule 5: Two out of three points in a row in Zone A (2 sigma) or beyond 
     # They have to be on the same side of the centerline!!
-    flag_zone_a_upper = pl.when(pl.col("value") > limits['uwl']).then(1).otherwise(0)
-    flag_zone_a_lower = pl.when(pl.col("value") < limits['lwl']).then(1).otherwise(0)
+    flag_zone_a_upper = pl.when(pl.col("value") > stats['uwl']).then(1).otherwise(0)
+    flag_zone_a_lower = pl.when(pl.col("value") < stats['lwl']).then(1).otherwise(0)
     rule_5_counter_upper = flag_zone_a_upper.rolling_sum(window_size=3)
     rule_5_counter_lower = flag_zone_a_lower.rolling_sum(window_size=3)
 
     # Rule 6: Four out of five points in a row in Zone B or beyond
-    rule_6_flag = pl.when(pl.col("value").is_between(limits['lzl'], limits['uzl'])).then(0).otherwise(1)
+    rule_6_flag = pl.when(pl.col("value").is_between(stats['lzl'], stats['uzl'])).then(0).otherwise(1)
     rule_6_counter = rule_6_flag.rolling_sum(window_size=5)
 
     # Rule 7: Fifteen points in a row within Zone C (the one closest to the centreline) 
-    rule_7_flag = pl.when(pl.col("value").is_between(limits['lzl'], limits['uzl'])).then(1).otherwise(0)
+    rule_7_flag = pl.when(pl.col("value").is_between(stats['lzl'], stats['uzl'])).then(1).otherwise(0)
     rule_7_counter = rule_7_flag.rolling_sum(window_size=15)
 
     # Rule 8: Eight points in a row with none in Zone C (that is, 8 points beyond 1 sigma)
@@ -113,23 +113,40 @@ def add_control_rules(df: pl.DataFrame, limits: dict, active_rules: dict = None)
     return df.with_columns(**rule_columns)
 
 
-def calculate_statistics(df: pl.DataFrame, limits: dict) -> dict:
-    """Calculate descriptive statistics for the control chart
+def calculate_stats(df: pl.DataFrame) -> tuple[dict, dict]:
+    """Calculate all control stats and statistics from the data
     
-    Args:
-        df: DataFrame with data
-        limits: Dictionary with control limits
+    Returns:
+        stats: Dictionary with descriptive statistics, including stats        
     """
-    return {
-        'Mean': df['value'].mean(),
-        'Median': df['value'].median(),
-        'StdDev': df['value'].std(),
-        'Min': df['value'].min(),
-        'Max': df['value'].max(),
-        'Range': df['value'].max() - df['value'].min(),
-        'Count': len(df),
-        'CP': (limits['ucl'] - limits['lcl']) / (6 * df['value'].std()) if df['value'].std() > 0 else float('nan')
+
+    mean = df['value'].mean()
+    std_dev = df['value'].std()
+    ucl = mean + 3 * std_dev
+    lcl = mean - 3 * std_dev
+    uwl = mean + 2 * std_dev
+    lwl = mean - 2 * std_dev
+    uzl = mean + std_dev
+    lzl = mean - std_dev
+    
+    stats = {
+        'mean': df['value'].mean(),
+        'median': df['value'].median(),
+        'stddev': df['value'].std(),
+        'min': df['value'].min(),
+        'max': df['value'].max(),
+        'range': df['value'].max() - df['value'].min(),
+        'count': len(df),
+        'CP': (ucl- lcl) / (6 * std_dev) if std_dev > 0 else float('nan'),
+        'ucl': ucl,
+        'lcl': lcl,
+        'uwl': uwl,
+        'lwl': lwl,
+        'uzl': uzl,
+        'lzl': lzl
     }
+    
+    return stats
 
 def process_data(df, active_rules=None):
     """Process the dataframe for display and plotting
@@ -144,13 +161,10 @@ def process_data(df, active_rules=None):
     # Prepare dataframe
     df = df.rename({df.columns[0]: "value"}).with_row_index()
     
-    # Calculate limits once
-    limits = calculate_control_limits(df)
+    # Calculate stats and stats
+    stats = calculate_stats(df)
     
     # Add control rules
-    df_with_rules = add_control_rules(df, limits, active_rules)
+    df_with_rules = add_control_rules(df, stats, active_rules)
     
-    # Calculate statistics
-    stats = calculate_statistics(df, limits)
-    
-    return df_with_rules, limits, stats
+    return df_with_rules, stats

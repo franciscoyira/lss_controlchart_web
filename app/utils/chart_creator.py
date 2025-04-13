@@ -4,12 +4,12 @@ from plotly.graph_objects import Figure
 import plotly.graph_objects as go
 
 
-def create_control_chart(df: pl.DataFrame, limits: dict, stats: dict, active_rules: dict = None) -> Figure:
-    """Create a control chart plot with all control limits
+def create_control_chart(df: pl.DataFrame, stats: dict, active_rules: dict = None) -> Figure:
+    """Create a control chart plot with all control stats
     
     Args:
         df: DataFrame with data
-        limits: Dictionary with control limits
+        stats: Dictionary with control stats
         stats: Dictionary with descriptive statistics
         active_rules: Dictionary with active rules {1: True/False, 2: True/False, ...}
                       If None, all rules are active
@@ -22,18 +22,18 @@ def create_control_chart(df: pl.DataFrame, limits: dict, stats: dict, active_rul
     fig = px.line(df, x='index', y='value', title='Control Chart Plot')
     
     # Add control limit lines
-    fig.add_hline(y=limits['mean'], line_dash="dash", line_color="grey", annotation_text="Mean", annotation=dict(font_color="grey"))
-    fig.add_hline(y=limits['uwl'], line_dash="dash", line_color="orange", annotation_text="2σ", annotation=dict(font_color="orange"))
-    fig.add_hline(y=limits['lwl'], line_dash="dash", line_color="orange")
-    fig.add_hline(y=limits['uzl'], line_dash="dash", line_color="green", annotation_text="1σ", annotation=dict(font_color="green"))
-    fig.add_hline(y=limits['lzl'], line_dash="dash", line_color="green")
-    fig.add_hline(y=limits['ucl'], line_dash="dash", line_color="red", annotation_text="3σ", annotation=dict(font_color="red"))
-    fig.add_hline(y=limits['lcl'], line_dash="dash", line_color="red")
+    fig.add_hline(y=stats['mean'], line_dash="dash", line_color="grey", annotation_text="Mean", annotation=dict(font_color="grey"))
+    fig.add_hline(y=stats['uwl'], line_dash="dash", line_color="orange", annotation_text="2σ", annotation=dict(font_color="orange"))
+    fig.add_hline(y=stats['lwl'], line_dash="dash", line_color="orange")
+    fig.add_hline(y=stats['uzl'], line_dash="dash", line_color="green", annotation_text="1σ", annotation=dict(font_color="green"))
+    fig.add_hline(y=stats['lzl'], line_dash="dash", line_color="green")
+    fig.add_hline(y=stats['ucl'], line_dash="dash", line_color="red", annotation_text="3σ", annotation=dict(font_color="red"))
+    fig.add_hline(y=stats['lcl'], line_dash="dash", line_color="red")
     
     # Add zone annotations to the left side for top areas
     fig.add_annotation(
         x=df['index'].min() - 2,
-        y=(limits['mean'] + limits['uzl'])/2,
+        y=(stats['mean'] + stats['uzl'])/2,
         text="Zone C",
         showarrow=False,
         xref="x",
@@ -47,7 +47,7 @@ def create_control_chart(df: pl.DataFrame, limits: dict, stats: dict, active_rul
     
     fig.add_annotation(
         x=df['index'].min() - 2,
-        y=(limits['uwl'] + limits['uzl'])/2,
+        y=(stats['uwl'] + stats['uzl'])/2,
         text="Zone B",
         showarrow=False,
         xref="x",
@@ -61,7 +61,7 @@ def create_control_chart(df: pl.DataFrame, limits: dict, stats: dict, active_rul
     
     fig.add_annotation(
         x=df['index'].min() - 2,
-        y=(limits['ucl'] + limits['uwl'])/2,
+        y=(stats['ucl'] + stats['uwl'])/2,
         text="Zone A",
         showarrow=False,
         xref="x",
@@ -144,11 +144,11 @@ def create_control_chart(df: pl.DataFrame, limits: dict, stats: dict, active_rul
     # Add descriptive statistics at the bottom
     stat_text = "<br>".join([
         f"<b>Process Statistics:</b>",
-        f"Mean: {stats['Mean']:.3f}",
-        f"Std Dev: {stats['StdDev']:.3f}",
-        f"UCL: {limits['ucl']:.3f}, LCL: {limits['lcl']:.3f}",
-        f"Range: {stats['Range']:.3f} (Min: {stats['Min']:.3f}, Max: {stats['Max']:.3f})",
-        f"Sample Count: {stats['Count']}",
+        f"Mean: {stats['mean']:.3f}",
+        f"Std Dev: {stats['stddev']:.3f}",
+        f"UCL: {stats['ucl']:.3f}, LCL: {stats['lcl']:.3f}",
+        f"Range: {stats['range']:.3f} (Min: {stats['min']:.3f}, Max: {stats['max']:.3f})",
+        f"Sample Count: {stats['count']}",
         f"Process Capability (Cp): {stats['CP']:.3f}"
     ])
     
