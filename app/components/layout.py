@@ -1,4 +1,5 @@
 from dash import html, dcc, dash_table
+from components.settings_toolbar import create_settings_toolbar
 
 def create_layout():
     """Create the main app layout"""
@@ -45,6 +46,13 @@ def create_layout():
             html.P('This tool will analyze your process data against the 8 Nelson rules to identify unusual variation.',
                   className='empty-state-text')
         ], id='empty-state', className='empty-state'),
+        
+        # Settings toolbar - shown only when data is loaded
+        html.Div(
+            create_settings_toolbar(),
+            id='settings-toolbar-container',
+            style={'display': 'none'}  # Initially hidden
+        ),
         
         # Rule boxes container - just create an empty container
         html.Div([

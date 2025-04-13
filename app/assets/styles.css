@@ -4,18 +4,18 @@
 .app-header {
     text-align: center;
     font-family: "Inter", "Segoe UI", system-ui, sans-serif;
-    font-size: 2.5rem;
-    font-weight: 600;
+    font-size: 2.2rem;
+    font-weight: 500;
     color: #fff;
     background: linear-gradient(120deg, #0062cc, #0097e6, #00b894);
     background-size: 200% 200%;
     animation: gradient 15s ease infinite;
-    padding: 24px 30px;
-    margin-top: 20px;
-    margin-bottom: 30px;
+    padding: 14px 20px;
+    margin-top: 10px;
+    margin-bottom: 10px;
     border-radius: 8px;
     box-shadow: 0 8px 16px rgba(0, 0, 0, 0.15);
-    letter-spacing: 0.5px;
+    letter-spacing: 0.3px;
     border: none;
 }
 
@@ -423,4 +423,136 @@
     border-left: 5px solid #ffeeba;
     font-weight: 500;
     box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+/* Settings Toolbar */
+.settings-toolbar {
+    display: flex;
+    flex-wrap: wrap;
+    background-color: #f8f9fa;
+    border: 1px solid #e9ecef;
+    border-radius: 8px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    padding: 5px 8px;
+    margin: 5px 10px;
+    align-items: center;
+    justify-content: flex-start;
+}
+
+.toolbar-item {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    margin-right: 20px;
+}
+
+.toolbar-label {
+    font-size: 12px;
+    font-weight: 500;
+    color: #495057;
+    margin-right: 8px;
+    white-space: nowrap;
+}
+
+.toolbar-input {
+    width: 80px;
+    height: 30px;
+    padding: 4px 8px;
+    border: 1px solid #ced4da;
+    border-radius: 4px;
+    font-size: 13px;
+    color: #212529;
+    background-color: #fff;
+    transition: all 0.2s ease;
+}
+
+.toolbar-input:hover {
+    border-color: #adb5bd;
+}
+
+.toolbar-input:focus {
+    border-color: #80bdff;
+    box-shadow: 0 0 0 2px rgba(0,123,255,.15);
+    outline: 0;
+}
+
+.toolbar-dropdown {
+    width: 100px;
+}
+
+/* Style the Dash dropdown to match the other inputs */
+.toolbar-dropdown .Select-control {
+    height: 30px;
+    border: 1px solid #ced4da;
+    border-radius: 4px;
+    background-color: #fff;
+    transition: all 0.2s ease;
+}
+
+.toolbar-dropdown .Select-control:hover {
+    border-color: #adb5bd;
+}
+
+.toolbar-dropdown .is-focused:not(.is-open) > .Select-control {
+    border-color: #80bdff;
+    box-shadow: 0 0 0 2px rgba(0,123,255,.15);
+}
+
+.toolbar-dropdown .Select-placeholder,
+.toolbar-dropdown .Select--single > .Select-control .Select-value {
+    line-height: 28px;
+    padding-left: 8px;
+    font-size: 13px;
+    color: #212529;
+}
+
+.toolbar-dropdown .Select-input {
+    height: 28px;
+    padding-left: 8px;
+}
+
+.toolbar-dropdown .Select-arrow {
+    border-color: #495057 transparent transparent;
+    border-width: 4px 4px 0;
+}
+
+.toolbar-dropdown .Select-menu-outer {
+    border-radius: 4px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    border: 1px solid #e9ecef;
+}
+
+.toolbar-dropdown .Select-option {
+    padding: 6px 8px;
+    font-size: 13px;
+}
+
+.toolbar-dropdown .Select-option.is-focused {
+    background-color: #f0f7ff;
+}
+
+.toolbar-dropdown .Select-option.is-selected {
+    background-color: #e0ebff;
+    color: #0062cc;
+    font-weight: 500;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+    .settings-toolbar {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 10px;
+        padding: 8px 12px;
+    }
+    
+    .toolbar-item {
+        width: 100%;
+        margin-right: 0;
+        justify-content: space-between;
+    }
+    
+    .toolbar-input, .toolbar-dropdown {
+        width: 60%;
+    }
 } 
