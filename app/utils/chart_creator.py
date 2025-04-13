@@ -19,7 +19,7 @@ def create_control_chart(df: pl.DataFrame, stats: dict, active_rules: dict = Non
         active_rules = {i: True for i in range(1, 9)}
         
     # Create base plot
-    fig = px.line(df, x='index', y='value', title='Control Chart Plot')
+    fig = px.line(df, x='index', y='value')
     
     # Add control limit lines
     fig.add_hline(y=stats['mean'], line_dash="dash", line_color="grey", annotation_text="Mean", annotation=dict(font_color="grey"))

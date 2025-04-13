@@ -61,4 +61,17 @@ def create_settings_toolbar():
             )
         ], className="toolbar-item"),
         
+        # Y-axis label
+        html.Div([
+            html.Label("Y-axis Label:", className="toolbar-label"),
+            dcc.Input(
+                id="input-y-axis-label",
+                type="text",
+                value="Value",
+                className="toolbar-input",
+                debounce=True,
+                style={"width": "100px"}
+            )
+        ], className="toolbar-item"),
+        
     ], id="settings-toolbar", className="settings-toolbar") 
