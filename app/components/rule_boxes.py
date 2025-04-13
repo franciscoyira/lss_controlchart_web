@@ -74,4 +74,9 @@ def create_rule_boxes():
         ], className='rule-box', id=f'rule-box-{rule["number"]}')
         rule_boxes.append(rule_box)
     
-    return html.Div(rule_boxes, className='rule-boxes-grid') 
+    return html.Div([
+        html.Div([
+            html.P("Control chart rules help identify exceptional variation in a process coming from special causes.", className='section-description')
+        ], className='rules-header'),
+        html.Div(rule_boxes, className='rule-boxes-grid')
+    ], className='rules-section') 
