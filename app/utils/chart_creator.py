@@ -27,7 +27,7 @@ def create_control_chart(df: pl.DataFrame, stats: dict, active_rules: dict = Non
     fig.add_hline(y=stats['lwl'], line_dash="dash", line_color="orange")
     fig.add_hline(y=stats['uzl'], line_dash="dash", line_color="green", annotation_text="1σ", annotation=dict(font_color="green"))
     fig.add_hline(y=stats['lzl'], line_dash="dash", line_color="green")
-    fig.add_hline(y=stats['ucl'], line_dash="dash", line_color="red", annotation_text="3σ", annotation=dict(font_color="red"))
+    fig.add_hline(y=stats['ucl'], line_dash="dash", line_color="red", annotation_text="3σ (Upper Control Limit)", annotation=dict(font_color="red"))
     fig.add_hline(y=stats['lcl'], line_dash="dash", line_color="red")
     
     # Add zone annotations to the left side for top areas
