@@ -10,10 +10,10 @@ def calculate_control_limits(df: pl.DataFrame) -> dict:
         'std_dev': std_dev,
         'ucl': mean + 3 * std_dev,
         'lcl': mean - 3 * std_dev,
-        'usl': mean + 2 * std_dev,
-        'lsl': mean - 2 * std_dev,
-        'usl_1': mean + std_dev,
-        'lsl_1': mean - std_dev,
+        'uwl': mean + 2 * std_dev,  # Upper Warning Limit
+        'lwl': mean - 2 * std_dev,  # Lower Warning Limit
+        'uzl': mean + std_dev,      # Upper Zone A Limit
+        'lzl': mean - std_dev,      # Lower Zone A Limit
     }
 
 
@@ -31,7 +31,7 @@ def add_control_rules(df: pl.DataFrame, limits: dict, active_rules: dict = None)
         active_rules = {i: True for i in range(1, 9)}
     
     val_diff = pl.col('value').diff()
-    in_zone_c = pl.col('value').is_between(limits['lsl_1'], limits['usl_1'])
+    in_zone_c = pl.col('value').is_between(limits['lzl'], limits['uzl'])
 
 
     rule_1_counter = pl.when(pl.col("value").is_between(limits['lcl'], limits['ucl'])).then(0).otherwise(1)
@@ -55,17 +55,17 @@ def add_control_rules(df: pl.DataFrame, limits: dict, active_rules: dict = None)
     
     # Rule 5: Two out of three points in a row in Zone A (2 sigma) or beyond 
     # They have to be on the same side of the centerline!!
-    flag_zone_a_upper = pl.when(pl.col("value") > limits['usl']).then(1).otherwise(0)
-    flag_zone_a_lower = pl.when(pl.col("value") < limits['lcl']).then(1).otherwise(0)
+    flag_zone_a_upper = pl.when(pl.col("value") > limits['uwl']).then(1).otherwise(0)
+    flag_zone_a_lower = pl.when(pl.col("value") < limits['lwl']).then(1).otherwise(0)
     rule_5_counter_upper = flag_zone_a_upper.rolling_sum(window_size=3)
     rule_5_counter_lower = flag_zone_a_lower.rolling_sum(window_size=3)
 
     # Rule 6: Four out of five points in a row in Zone B or beyond
-    rule_6_flag = pl.when(pl.col("value").is_between(limits['lsl_1'], limits['usl_1'])).then(0).otherwise(1)
+    rule_6_flag = pl.when(pl.col("value").is_between(limits['lzl'], limits['uzl'])).then(0).otherwise(1)
     rule_6_counter = rule_6_flag.rolling_sum(window_size=5)
 
     # Rule 7: Fifteen points in a row within Zone C (the one closest to the centreline) 
-    rule_7_flag = pl.when(pl.col("value").is_between(limits['lsl_1'], limits['usl_1'])).then(1).otherwise(0)
+    rule_7_flag = pl.when(pl.col("value").is_between(limits['lzl'], limits['uzl'])).then(1).otherwise(0)
     rule_7_counter = rule_7_flag.rolling_sum(window_size=15)
 
     # Rule 8: Eight points in a row with none in Zone C (that is, 8 points beyond 1 sigma)

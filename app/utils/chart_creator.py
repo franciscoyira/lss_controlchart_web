@@ -34,17 +34,17 @@ def create_control_chart(df: pl.DataFrame, limits: dict, active_rules: dict = No
     
     # Add control limit lines
     fig.add_hline(y=limits['mean'], line_dash="dash", line_color="grey", annotation_text="Mean", annotation=dict(font_color="grey"))
-    fig.add_hline(y=limits['usl'], line_dash="dash", line_color="orange", annotation_text="2σ", annotation=dict(font_color="orange"))
-    fig.add_hline(y=limits['lsl'], line_dash="dash", line_color="orange")
-    fig.add_hline(y=limits['usl_1'], line_dash="dash", line_color="green", annotation_text="1σ", annotation=dict(font_color="green"))
-    fig.add_hline(y=limits['lsl_1'], line_dash="dash", line_color="green")
+    fig.add_hline(y=limits['uwl'], line_dash="dash", line_color="orange", annotation_text="2σ", annotation=dict(font_color="orange"))
+    fig.add_hline(y=limits['lwl'], line_dash="dash", line_color="orange")
+    fig.add_hline(y=limits['uzl'], line_dash="dash", line_color="green", annotation_text="1σ", annotation=dict(font_color="green"))
+    fig.add_hline(y=limits['lzl'], line_dash="dash", line_color="green")
     fig.add_hline(y=limits['ucl'], line_dash="dash", line_color="red", annotation_text="3σ", annotation=dict(font_color="red"))
     fig.add_hline(y=limits['lcl'], line_dash="dash", line_color="red")
     
     # Add zone annotations to the left side for top areas
     fig.add_annotation(
         x=df['index'].min() - 2,
-        y=(limits['mean'] + limits['usl_1'])/2,
+        y=(limits['mean'] + limits['uzl'])/2,
         text="Zone C",
         showarrow=False,
         xref="x",
@@ -58,7 +58,7 @@ def create_control_chart(df: pl.DataFrame, limits: dict, active_rules: dict = No
     
     fig.add_annotation(
         x=df['index'].min() - 2,
-        y=(limits['usl'] + limits['usl_1'])/2,
+        y=(limits['uwl'] + limits['uzl'])/2,
         text="Zone B",
         showarrow=False,
         xref="x",
@@ -72,7 +72,7 @@ def create_control_chart(df: pl.DataFrame, limits: dict, active_rules: dict = No
     
     fig.add_annotation(
         x=df['index'].min() - 2,
-        y=(limits['ucl'] + limits['usl'])/2,
+        y=(limits['ucl'] + limits['uwl'])/2,
         text="Zone A",
         showarrow=False,
         xref="x",

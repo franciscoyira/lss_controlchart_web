@@ -44,7 +44,7 @@ def register_callbacks(app):
         
         if not ctx.triggered:
             # No triggers, return empty outputs with visible empty state
-            return html.Div(), None, None, empty_state_style, None, download_container_style, create_rule_boxes(), upload_class, in_control_class, out_control_class
+            return html.Div(style={'display': 'none'}), None, None, empty_state_style, None, download_container_style, create_rule_boxes(), upload_class, in_control_class, out_control_class
         
         trigger_id = ctx.triggered[0]['prop_id'].split('.')[0]
         
@@ -82,10 +82,9 @@ def register_callbacks(app):
             dataset_name = 'out_of_control.csv'
         else:
             # No valid triggers, return current state with visible empty state
-            return html.Div('Upload a file or select a predefined dataset.'), html.Div(), stored_data, empty_state_style, None, download_container_style, create_rule_boxes(), upload_class, in_control_class, out_control_class
-        
+            return html.Div(style={'display': 'none'}), html.Div(style={'display': 'none'}), stored_data, empty_state_style, None, download_container_style, create_rule_boxes(), upload_class, in_control_class, out_control_class
         if df is None:
-            return html.Div('Error processing the data.'), html.Div(), None, empty_state_style, None, download_container_style, create_rule_boxes(), upload_class, in_control_class, out_control_class
+            return html.Div('Error processing the data.'), html.Div(style={'display': 'none'}), None, empty_state_style, None, download_container_style, create_rule_boxes(), upload_class, in_control_class, out_control_class
         
         # Process the data with active rules
         df_with_rules, limits = process_data(df, active_rules)
