@@ -87,10 +87,10 @@ def register_callbacks(app):
             return html.Div('Error processing the data.'), html.Div(style={'display': 'none'}), None, empty_state_style, None, download_container_style, create_rule_boxes(), upload_class, in_control_class, out_control_class
         
         # Process the data with active rules
-        df_with_rules, limits = process_data(df, active_rules)
+        df_with_rules, limits, stats = process_data(df, active_rules)
         
         # Create the plot with active rules
-        fig = create_control_chart(df_with_rules, limits, active_rules)
+        fig = create_control_chart(df_with_rules, limits, stats, active_rules)
         plot_component = dcc.Graph(figure=fig)
         
         # Create the data table

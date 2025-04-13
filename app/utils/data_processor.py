@@ -113,6 +113,23 @@ def add_control_rules(df: pl.DataFrame, limits: dict, active_rules: dict = None)
     return df.with_columns(**rule_columns)
 
 
+def calculate_statistics(df: pl.DataFrame, limits: dict) -> dict:
+    """Calculate descriptive statistics for the control chart
+    
+    Args:
+        df: DataFrame with data
+        limits: Dictionary with control limits
+    """
+    return {
+        'Mean': df['value'].mean(),
+        'Median': df['value'].median(),
+        'StdDev': df['value'].std(),
+        'Min': df['value'].min(),
+        'Max': df['value'].max(),
+        'Range': df['value'].max() - df['value'].min(),
+        'Count': len(df),
+        'CP': (limits['ucl'] - limits['lcl']) / (6 * df['value'].std()) if df['value'].std() > 0 else float('nan')
+    }
 
 def process_data(df, active_rules=None):
     """Process the dataframe for display and plotting
@@ -122,7 +139,7 @@ def process_data(df, active_rules=None):
         active_rules: Dictionary with active rules {1: True/False, 2: True/False, ...}
     """
     if df is None:
-        return None, None
+        return None, None, None
         
     # Prepare dataframe
     df = df.rename({df.columns[0]: "value"}).with_row_index()
@@ -133,4 +150,7 @@ def process_data(df, active_rules=None):
     # Add control rules
     df_with_rules = add_control_rules(df, limits, active_rules)
     
-    return df_with_rules, limits
+    # Calculate statistics
+    stats = calculate_statistics(df, limits)
+    
+    return df_with_rules, limits, stats

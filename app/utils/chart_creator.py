@@ -4,12 +4,13 @@ from plotly.graph_objects import Figure
 import plotly.graph_objects as go
 
 
-def create_control_chart(df: pl.DataFrame, limits: dict, active_rules: dict = None) -> Figure:
+def create_control_chart(df: pl.DataFrame, limits: dict, stats: dict, active_rules: dict = None) -> Figure:
     """Create a control chart plot with all control limits
     
     Args:
         df: DataFrame with data
         limits: Dictionary with control limits
+        stats: Dictionary with descriptive statistics
         active_rules: Dictionary with active rules {1: True/False, 2: True/False, ...}
                       If None, all rules are active
     """
@@ -19,18 +20,6 @@ def create_control_chart(df: pl.DataFrame, limits: dict, active_rules: dict = No
         
     # Create base plot
     fig = px.line(df, x='index', y='value', title='Control Chart Plot')
-    
-    # Calculate descriptive statistics
-    stats = {
-        'Mean': df['value'].mean(),
-        'Median': df['value'].median(),
-        'StdDev': df['value'].std(),
-        'Min': df['value'].min(),
-        'Max': df['value'].max(),
-        'Range': df['value'].max() - df['value'].min(),
-        'Count': len(df),
-        'CP': (limits['ucl'] - limits['lcl']) / (6 * df['value'].std()) if df['value'].std() > 0 else float('nan')
-    }
     
     # Add control limit lines
     fig.add_hline(y=limits['mean'], line_dash="dash", line_color="grey", annotation_text="Mean", annotation=dict(font_color="grey"))
