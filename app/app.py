@@ -1,14 +1,8 @@
-import polars as pl
-import plotly.express as px
-from plotly.graph_objects import Figure
-from dash import Dash, html, dcc, callback, Output, Input, State, dash_table, ctx
+from dash import Dash, html
 from flask import Flask
-import plotly.graph_objects as go
 
-# Import components separately to avoid circular imports
 from components.layout import create_layout
 from components.rule_boxes import create_rule_boxes
-import callbacks.rule_checkbox
 from callbacks.data_processing import register_callbacks
 from callbacks.download import register_download_callback
 
