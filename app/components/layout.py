@@ -1,4 +1,4 @@
-from dash import html, dcc, dash_table
+from dash import html, dcc
 from components.settings_toolbar import create_settings_toolbar
 
 def create_layout():
