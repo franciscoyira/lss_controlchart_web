@@ -4,7 +4,7 @@ from components.settings_toolbar import create_settings_toolbar
 def create_layout():
     """Create the main app layout"""
     return html.Div([
-        html.H1('Lean Six Sigma - Control Chart Rules Detection', className='app-header'),
+        html.H1('Process Behaviour Chart Tool - Lean Six Sigma', className='app-header'),
         
         # Card-style layout for data selection options
         html.Div([
