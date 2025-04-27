@@ -1,4 +1,4 @@
-from dash import Dash, html
+from dash import Dash, html, dcc
 from flask import Flask
 
 from components.layout import create_layout
@@ -18,8 +18,8 @@ if rule_boxes_container:
     rule_boxes_grid = create_rule_boxes()
     rule_boxes_container.children.append(rule_boxes_grid)
 
-# Add the rule-state-store div
-layout.children.append(html.Div(id='rule-state-store', style={'display': 'none'}))
+# Add the app-state-store div for all app state (rules, settings, etc.)
+layout.children.append(dcc.Store(id='app-state-store', storage_type='memory', data={}))
 
 # Set the app layout
 app.layout = layout

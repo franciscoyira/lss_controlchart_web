@@ -11,8 +11,9 @@ def create_settings_toolbar():
                 type="number",
                 placeholder="Enter value",
                 className="toolbar-input",
-                debounce=True,
-                step=0.01
+                step=0.01,
+                persistence=True,
+                persistence_type='memory'
             )
         ], className="toolbar-item"),
         
@@ -24,8 +25,9 @@ def create_settings_toolbar():
                 type="number",
                 placeholder="Enter value",
                 className="toolbar-input",
-                debounce=True,
-                step=0.01
+                step=0.01,
+                persistence=True,
+                persistence_type='memory'
             )
         ], className="toolbar-item"),
         
@@ -42,7 +44,9 @@ def create_settings_toolbar():
                 value="days",
                 clearable=False,
                 className="toolbar-dropdown",
-                searchable=False
+                searchable=False,
+                persistence=True,
+                persistence_type='memory'
             )
         ], className="toolbar-item"),
         
@@ -56,8 +60,9 @@ def create_settings_toolbar():
                 min=0,
                 step=1,
                 className="toolbar-input",
-                debounce=True,
-                style={"width": "85px"}
+                style={"width": "85px"},
+                persistence=True,
+                persistence_type='memory'
             )
         ], className="toolbar-item"),
         
@@ -69,8 +74,9 @@ def create_settings_toolbar():
                 type="text",
                 value="Value",
                 className="toolbar-input",
-                debounce=True,
-                style={"width": "100px"}
+                style={"width": "100px"},
+                persistence=True,
+                persistence_type='memory'
             )
         ], className="toolbar-item"),
         

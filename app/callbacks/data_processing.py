@@ -1,14 +1,49 @@
-from dash import Output, Input, State, html, dcc, dash_table, ctx
-import plotly.graph_objects as go
+from dash import Output, Input, State, html, dcc, dash_table, ctx, ALL, MATCH
 # Import your utility functions
 from components.rule_boxes import create_rule_boxes
 from utils.data_loader import parse_csv, load_predefined_dataset
 from utils.data_processor import process_data
 from utils.chart_creator import create_control_chart
 from callbacks.rule_checkbox import get_active_rules
+import json
 
 
 def register_callbacks(app):
+    # Callback to update the app state when settings change
+    @app.callback(
+        Output('app-state-store', 'data', allow_duplicate=True),
+        [Input('input-usl', 'value'),
+        Input('input-lsl', 'value'),
+        Input('dropdown-period-type', 'value'),
+        Input('input-process-change', 'value'),
+        Input('input-y-axis-label', 'value')],
+        [State('app-state-store', 'data')],
+        prevent_initial_call=True
+    )
+    def update_app_state_settings(usl, lsl, period_type, process_change, y_axis_label, current_data):
+        """Update the app state with settings values"""
+        # Initialize app state if None
+        if current_data is None:
+            current_data = {}
+        
+        # Initialize settings if not present
+        if 'settings' not in current_data:
+            current_data['settings'] = {}
+            
+        # Update only the properties that have changed
+        if ctx.triggered_id == 'input-usl' and usl is not None:
+            current_data['settings']['usl'] = usl
+        elif ctx.triggered_id == 'input-lsl' and lsl is not None:
+            current_data['settings']['lsl'] = lsl
+        elif ctx.triggered_id == 'dropdown-period-type' and period_type is not None:
+            current_data['settings']['period_type'] = period_type
+        elif ctx.triggered_id == 'input-process-change' and process_change is not None:
+            current_data['settings']['process_change'] = process_change
+        elif ctx.triggered_id == 'input-y-axis-label' and y_axis_label is not None:
+            current_data['settings']['y_axis_label'] = y_axis_label
+        
+        return current_data
+    
     @app.callback(
         [Output('plot-container', 'children'),
         Output('output-data-upload', 'children'),
@@ -24,11 +59,11 @@ def register_callbacks(app):
         [Input('upload-data', 'contents'),
         Input('btn-in-control', 'n_clicks'),
         Input('btn-out-of-control', 'n_clicks'),
-        Input('rule-state-store', 'children')],
+        Input('app-state-store', 'data')],
         [State('upload-data', 'filename'),
         State('stored-data', 'data')]
     )
-    def update_output(contents, in_control_clicks, out_control_clicks, rule_state_json, filename, stored_data):
+    def update_output(contents, in_control_clicks, out_control_clicks, app_state, filename, stored_data):
         """Update the output based on user interactions"""
         empty_state_style = {'margin': '40px auto', 'maxWidth': '800px'} # Default visible
         download_container_style = {'display': 'none'} # Default hidden
@@ -39,8 +74,13 @@ def register_callbacks(app):
         in_control_class = 'option-card'
         out_control_class = 'option-card'
         
-        # Get active rules from the rule state
-        active_rules = get_active_rules(rule_state_json)
+        # Get active rules from the app state
+        active_rules = get_active_rules(app_state)
+        
+        # Get settings values from app state
+        settings = app_state.get('settings', {}) if app_state else {}
+        usl_value = settings.get('usl')
+        lsl_value = settings.get('lsl')
         
         if not ctx.triggered:
             # No triggers, return empty outputs with visible empty state
@@ -59,8 +99,8 @@ def register_callbacks(app):
         df = None
         dataset_name = None
         
-        # If the rule state changed, but we have stored data, reprocess it
-        if trigger_id == 'rule-state-store' and stored_data and 'dataset_name' in stored_data:
+        # If the app state changed, but we have stored data, reprocess it
+        if trigger_id == 'app-state-store' and stored_data and 'dataset_name' in stored_data:
             dataset_name = stored_data['dataset_name']
             if dataset_name.startswith('in_control'):
                 df = load_predefined_dataset('in_control.csv')
@@ -87,10 +127,10 @@ def register_callbacks(app):
             return html.Div('Error processing the data.'), html.Div(style={'display': 'none'}), None, empty_state_style, None, download_container_style, create_rule_boxes(), upload_class, in_control_class, out_control_class, settings_toolbar_style
         
         # Process the data with active rules
-        df_with_rules, stats = process_data(df, active_rules)
+        df_with_rules, stats = process_data(df, active_rules, usl_value, lsl_value)
         
         # Create the plot with active rules
-        fig = create_control_chart(df_with_rules, stats, active_rules)
+        fig = create_control_chart(df_with_rules, stats, active_rules, settings)
         plot_component = dcc.Graph(figure=fig)
         
         # Create the data table

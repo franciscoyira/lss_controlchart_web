@@ -4,16 +4,20 @@ from plotly.graph_objects import Figure
 import plotly.graph_objects as go
 
 
-def create_control_chart(df: pl.DataFrame, stats: dict, active_rules: dict = None) -> Figure:
+def create_control_chart(df: pl.DataFrame, stats: dict, active_rules: dict = None, settings=None) -> Figure:
     """Create a control chart plot with all control stats
     
     Args:
         df: DataFrame with data
-        stats: Dictionary with control stats
         stats: Dictionary with descriptive statistics
         active_rules: Dictionary with active rules {1: True/False, 2: True/False, ...}
                       If None, all rules are active
+        settings: Dictionary with chart settings (period_type, y_axis_label, etc.)
     """
+    if settings is None:
+        settings = {}
+        
+    
     # If active_rules is None, assume all rules are active
     if active_rules is None:
         active_rules = {i: True for i in range(1, 9)}
@@ -133,8 +137,8 @@ def create_control_chart(df: pl.DataFrame, stats: dict, active_rules: dict = Non
     
     # Update layout to add more height for annotations
     fig.update_layout(
-        xaxis_title="Observation",
-        yaxis_title="Value",
+        xaxis_title=settings.get('period_type', 'Observation'),
+        yaxis_title=settings.get('y_axis_label', 'Value'),
         showlegend=False,
         hovermode='closest',
         height=700,  # Increase height to accommodate stats better
@@ -149,7 +153,8 @@ def create_control_chart(df: pl.DataFrame, stats: dict, active_rules: dict = Non
         f"UCL: {stats['ucl']:.3f}, LCL: {stats['lcl']:.3f}",
         f"Range: {stats['range']:.3f} (Min: {stats['min']:.3f}, Max: {stats['max']:.3f})",
         f"Sample Count: {stats['count']}",
-        f"Process Capability (Cp): {stats['CP']:.3f}"
+        f"Process Capability Index (Cp): {stats['cp']:.3f}" if stats['cp'] is not None else "Process Capability Index (Cp): N/A",
+        f"Process Capability Index (centered) (Cpk): {stats['cpk']:.3f}" if stats['cpk'] is not None else "Process Capability Index (centered) (Cpk): N/A"
     ])
     
     fig.add_annotation(

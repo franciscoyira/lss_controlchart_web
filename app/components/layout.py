@@ -87,7 +87,7 @@ def create_layout():
         dcc.Store(id='stored-data'),
         dcc.Store(id='processed-data-store'),
         
-        # Note: rule-state-store will be added in app.py
+        # Note: app-state-store will be added in app.py
         
         # Footer with references
         create_footer()

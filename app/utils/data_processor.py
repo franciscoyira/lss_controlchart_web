@@ -112,43 +112,51 @@ def add_control_rules(df: pl.DataFrame, stats: dict, active_rules: dict = None) 
 
     return df.with_columns(**rule_columns)
 
+def calculate_cp_cpk(mu, sigma, USL=None, LSL=None):
+    if USL is None or LSL is None or sigma == 0:
+        return None, None, None, None
+    cp = (USL - LSL) / (6 * sigma)
+    cpu = (USL - mu) / (3 * sigma)
+    cpl = (mu - LSL) / (3 * sigma)
+    cpk = min(cpu, cpl)
+    return cp, cpu, cpl, cpk
 
-def calculate_stats(df: pl.DataFrame) -> tuple[dict, dict]:
+def calculate_stats(df: pl.DataFrame, usl: float, lsl: float) -> tuple[dict, dict]:
     """Calculate all control stats and statistics from the data
     
+    Args:
+        df: DataFrame with data
+        usl: Upper Specification Limit
+        lsl: Lower Specification Limit
+
     Returns:
         stats: Dictionary with descriptive statistics, including stats        
     """
 
     mean = df['value'].mean()
     std_dev = df['value'].std()
-    ucl = mean + 3 * std_dev
-    lcl = mean - 3 * std_dev
-    uwl = mean + 2 * std_dev
-    lwl = mean - 2 * std_dev
-    uzl = mean + std_dev
-    lzl = mean - std_dev
     
     stats = {
-        'mean': df['value'].mean(),
+        'mean': mean,
         'median': df['value'].median(),
-        'stddev': df['value'].std(),
+        'stddev': std_dev,
         'min': df['value'].min(),
         'max': df['value'].max(),
         'range': df['value'].max() - df['value'].min(),
         'count': len(df),
-        'CP': (ucl- lcl) / (6 * std_dev) if std_dev > 0 else float('nan'),
-        'ucl': ucl,
-        'lcl': lcl,
-        'uwl': uwl,
-        'lwl': lwl,
-        'uzl': uzl,
-        'lzl': lzl
+        'ucl': mean + 3 * std_dev,
+        'lcl': mean - 3 * std_dev,
+        'uwl': mean + 2 * std_dev,
+        'lwl': mean - 2 * std_dev,
+        'uzl': mean + std_dev,
+        'lzl': mean - std_dev
     }
-    
+
+    stats['cp'], stats['cpu'], stats['cpl'], stats['cpk'] = calculate_cp_cpk(mean, std_dev, usl, lsl)
+
     return stats
 
-def process_data(df, active_rules=None):
+def process_data(df, active_rules=None, usl=None, lsl=None):
     """Process the dataframe for display and plotting
     
     Args:
@@ -162,7 +170,7 @@ def process_data(df, active_rules=None):
     df = df.rename({df.columns[0]: "value"}).with_row_index()
     
     # Calculate stats and stats
-    stats = calculate_stats(df)
+    stats = calculate_stats(df, usl, lsl)
     
     # Add control rules
     df_with_rules = add_control_rules(df, stats, active_rules)
