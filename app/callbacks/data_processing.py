@@ -1,7 +1,5 @@
-from dash import callback, Output, Input, State, html, dcc, dash_table, ctx
+from dash import Output, Input, State, html, dcc, dash_table, ctx
 import plotly.graph_objects as go
-from plotly.graph_objects import Figure
-import json
 # Import your utility functions
 from components.rule_boxes import create_rule_boxes
 from utils.data_loader import parse_csv, load_predefined_dataset
