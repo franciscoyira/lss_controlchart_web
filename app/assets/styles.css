@@ -459,7 +459,11 @@
     white-space: nowrap;
 }
 
-.toolbar-input {
+.toolbar-rangeslider {
+    width: 160px;
+}
+
+.toolbar-textbox-input {
     width: 80px;
     height: 30px;
     padding: 4px 8px;
@@ -471,11 +475,11 @@
     transition: all 0.2s ease;
 }
 
-.toolbar-input:hover {
+.toolbar-textbox-input:hover {
     border-color: #adb5bd;
 }
 
-.toolbar-input:focus {
+.toolbar-textbox-input:focus {
     border-color: #80bdff;
     box-shadow: 0 0 0 2px rgba(0,123,255,.15);
     outline: 0;

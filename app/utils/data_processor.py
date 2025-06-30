@@ -1,13 +1,36 @@
 import polars as pl
 
 def calculate_control_stats(df: pl.DataFrame) -> dict:
-    """Calculate all control stats from the data"""
+    """
+    Calculates stats that can be computed without user input
+    Parameters:
+        df (pl.DataFrame): Input DataFrame with a numeric 'value' column representing the process data.
+    Returns:
+        dict: A dictionary containing:
+            - 'mean': Mean of the 'value' column.
+            - 'std_dev': Standard deviation of the 'value' column.
+            - 'ucl': Upper Control Limit (mean + 3 * std_dev).
+            - 'lcl': Lower Control Limit (mean - 3 * std_dev).
+            - 'uwl': Upper Warning Limit (mean + 2 * std_dev).
+            - 'lwl': Lower Warning Limit (mean - 2 * std_dev).
+            - 'uzl': Upper Zone A Limit (mean + 1 * std_dev).
+            - 'lzl': Lower Zone A Limit (mean - 1 * std_dev).
+    Notes:
+        Assumes the 'value' column exists and contains numeric data.
+    """
     mean = df['value'].mean()
     std_dev = df['value'].std()
+    min_value = df['value'].min()
+    max_value = df['value'].max()
+    count = df['value'].count()
     
     return {
         'mean': mean,
         'std_dev': std_dev,
+        'min': min_value,
+        'max': max_value,
+        'count': count,
+        'range': max_value - min_value,
         'ucl': mean + 3 * std_dev,
         'lcl': mean - 3 * std_dev,
         'uwl': mean + 2 * std_dev,  # Upper Warning Limit
@@ -16,15 +39,16 @@ def calculate_control_stats(df: pl.DataFrame) -> dict:
         'lzl': mean - std_dev,      # Lower Zone A Limit
     }
 
-
 def add_control_rules(df: pl.DataFrame, stats: dict, active_rules: dict = None) -> pl.DataFrame:
-    """Add control chart rules to the dataframe
+    """Add flag columns indicating if each data point (row) breaks any of the active control chart rules.
     
     Args:
-        df: DataFrame with data
-        stats: Dictionary with control stats
+        df: Polars DataFrame
+        stats: output of `calculate_control_stats()`
         active_rules: Dictionary with active rules {1: True/False, 2: True/False, ...}
                       If None, all rules are active
+    Returns:
+        df: a Polars Dataframe with the flag columns added
     """
     # If active_rules is None, assume all rules are active
     if active_rules is None:
@@ -112,49 +136,34 @@ def add_control_rules(df: pl.DataFrame, stats: dict, active_rules: dict = None) 
 
     return df.with_columns(**rule_columns)
 
-def calculate_cp_cpk(mu, sigma, USL=None, LSL=None):
+def calculate_capability(mu, sigma, USL=None, LSL=None):
+    """
+    Calculate Cp, Cpu, Cpl, and Cpk process capability indices.
+    Args:
+        mu (float): Process mean (data-driven)
+        sigma (float): Process standard deviation (data-driven)
+        USL (float, optional): Upper specification limit (user-provided)
+        LSL (float, optional): Lower specification limit (user-provided)
+    Returns:
+        dict: A dictionary containing Cp, Cpu, Cpl, and Cpk indices.
+              Returns None if USL, LSL, or sigma is zero.
+    """
+    
     if USL is None or LSL is None or sigma == 0:
-        return None, None, None, None
+        return None
     cp = (USL - LSL) / (6 * sigma)
     cpu = (USL - mu) / (3 * sigma)
     cpl = (mu - LSL) / (3 * sigma)
     cpk = min(cpu, cpl)
-    return cp, cpu, cpl, cpk
-
-def calculate_stats(df: pl.DataFrame, usl: float, lsl: float) -> tuple[dict, dict]:
-    """Calculate all control stats and statistics from the data
     
-    Args:
-        df: DataFrame with data
-        usl: Upper Specification Limit
-        lsl: Lower Specification Limit
-
-    Returns:
-        stats: Dictionary with descriptive statistics, including stats        
-    """
-
-    mean = df['value'].mean()
-    std_dev = df['value'].std()
-    
-    stats = {
-        'mean': mean,
-        'median': df['value'].median(),
-        'stddev': std_dev,
-        'min': df['value'].min(),
-        'max': df['value'].max(),
-        'range': df['value'].max() - df['value'].min(),
-        'count': len(df),
-        'ucl': mean + 3 * std_dev,
-        'lcl': mean - 3 * std_dev,
-        'uwl': mean + 2 * std_dev,
-        'lwl': mean - 2 * std_dev,
-        'uzl': mean + std_dev,
-        'lzl': mean - std_dev
+    capability = {
+        'cp': cp,
+        'cpu': cpu,
+        'cpl': cpl,
+        'cpk': cpk
     }
-
-    stats['cp'], stats['cpu'], stats['cpl'], stats['cpk'] = calculate_cp_cpk(mean, std_dev, usl, lsl)
-
-    return stats
+    
+    return capability
 
 def process_data(df, active_rules=None, usl=None, lsl=None):
     """Process the dataframe for display and plotting
@@ -169,10 +178,11 @@ def process_data(df, active_rules=None, usl=None, lsl=None):
     # Prepare dataframe
     df = df.rename({df.columns[0]: "value"}).with_row_index()
     
-    # Calculate stats and stats
-    stats = calculate_stats(df, usl, lsl)
+    # Calculate data-driven stats and capability stats
+    data_stats = calculate_control_stats(df)
+    capability_stats = calculate_capability(df, usl, lsl)
     
     # Add control rules
-    df_with_rules = add_control_rules(df, stats, active_rules)
+    df_with_rules = add_control_rules(df, data_stats, active_rules)
     
-    return df_with_rules, stats
+    return df_with_rules, data_stats, capability_stats

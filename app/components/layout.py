@@ -49,7 +49,6 @@ def create_layout():
         
         # Settings toolbar - shown only when data is loaded
         html.Div(
-            create_settings_toolbar(),
             id='settings-toolbar-container',
             style={'display': 'none'}  # Initially hidden
         ),

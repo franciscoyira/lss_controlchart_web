@@ -8,7 +8,7 @@ from callbacks.download import register_download_callback
 
 # Initialize Flask and Dash
 server = Flask(__name__)
-app = Dash(__name__, server=server)
+app = Dash(__name__, server=server, suppress_callback_exceptions=True)
 
 layout = create_layout()
 

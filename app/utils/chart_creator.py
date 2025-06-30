@@ -4,20 +4,35 @@ from plotly.graph_objects import Figure
 import plotly.graph_objects as go
 
 
-def create_control_chart(df: pl.DataFrame, stats: dict, active_rules: dict = None, settings=None) -> Figure:
+def create_control_chart(
+    df: pl.DataFrame,
+    stats: dict,
+    capability_stats: dict = None,
+    active_rules: dict = None,
+    settings=None) -> Figure:
     """Create a control chart plot with all control stats
     
     Args:
         df: DataFrame with data
-        stats: Dictionary with descriptive statistics
+        stats: Dictionary with data-driven statistics
         active_rules: Dictionary with active rules {1: True/False, 2: True/False, ...}
                       If None, all rules are active
         settings: Dictionary with chart settings (period_type, y_axis_label, etc.)
     """
-    if settings is None:
-        settings = {}
-        
+    # Define rule descriptions for tooltips
+    rule_descriptions = {
+        'rule_1': "Rule 1: Point beyond 3 sigma",
+        'rule_2': "Rule 2: 9 points on same side of centerline",
+        'rule_3': "Rule 3: 6 points steadily increasing/decreasing",
+        'rule_4': "Rule 4: 14 points alternating up and down", 
+        'rule_5': "Rule 5: 2 of 3 points in Zone A or beyond",
+        'rule_6': "Rule 6: 4 of 5 points in Zone B or beyond",
+        'rule_7': "Rule 7: 15 points in Zone C",
+        'rule_8': "Rule 8: 8 points with none in Zone C"
+    }
     
+    settings = settings or {}
+                
     # If active_rules is None, assume all rules are active
     if active_rules is None:
         active_rules = {i: True for i in range(1, 9)}
@@ -25,14 +40,25 @@ def create_control_chart(df: pl.DataFrame, stats: dict, active_rules: dict = Non
     # Create base plot
     fig = px.line(df, x='index', y='value')
     
-    # Add control limit lines
-    fig.add_hline(y=stats['mean'], line_dash="dash", line_color="grey", annotation_text="Mean", annotation=dict(font_color="grey"))
-    fig.add_hline(y=stats['uwl'], line_dash="dash", line_color="orange", annotation_text="2σ", annotation=dict(font_color="orange"))
-    fig.add_hline(y=stats['lwl'], line_dash="dash", line_color="orange")
-    fig.add_hline(y=stats['uzl'], line_dash="dash", line_color="green", annotation_text="1σ", annotation=dict(font_color="green"))
-    fig.add_hline(y=stats['lzl'], line_dash="dash", line_color="green")
-    fig.add_hline(y=stats['ucl'], line_dash="dash", line_color="red", annotation_text="3σ (Upper Control Limit)", annotation=dict(font_color="red"))
-    fig.add_hline(y=stats['lcl'], line_dash="dash", line_color="red")
+    # Define control line specs: (stat_key, color, annotation text)
+    control_line_specs = [
+        ("mean", "grey",   "Mean"),
+        ("uwl",  "orange", "2σ"),
+        ("lwl",  "orange", None),
+        ("uzl",  "green",  "1σ"),
+        ("lzl",  "green",  None),
+        ("ucl",  "red",    "3σ (Upper Control Limit)"),
+        ("lcl",  "red",    None),
+    ]
+
+    for key, color, text in control_line_specs:
+        fig.add_hline(
+            y=stats[key],
+            line_dash="dash",
+            line_color=color,
+            annotation_text=text,
+            annotation=dict(font_color=color) if text else None
+        )
     
     # Add zone annotations to the left side for top areas
     fig.add_annotation(
@@ -76,18 +102,6 @@ def create_control_chart(df: pl.DataFrame, stats: dict, active_rules: dict = Non
         borderwidth=1,
         borderpad=2
     )
-    
-    # Define rule descriptions for tooltips
-    rule_descriptions = {
-        'rule_1': "Rule 1: Point beyond 3 sigma",
-        'rule_2': "Rule 2: 9 points on same side of centerline",
-        'rule_3': "Rule 3: 6 points steadily increasing/decreasing",
-        'rule_4': "Rule 4: 14 points alternating up and down", 
-        'rule_5': "Rule 5: 2 of 3 points in Zone A or beyond",
-        'rule_6': "Rule 6: 4 of 5 points in Zone B or beyond",
-        'rule_7': "Rule 7: 15 points in Zone C",
-        'rule_8': "Rule 8: 8 points with none in Zone C"
-    }
     
     # Create arrays for scatter plot with highlighted points
     indices = []
@@ -146,16 +160,21 @@ def create_control_chart(df: pl.DataFrame, stats: dict, active_rules: dict = Non
     )
     
     # Add descriptive statistics at the bottom
-    stat_text = "<br>".join([
-        f"<b>Process Statistics:</b>",
-        f"Mean: {stats['mean']:.3f}",
-        f"Std Dev: {stats['stddev']:.3f}",
-        f"UCL: {stats['ucl']:.3f}, LCL: {stats['lcl']:.3f}",
-        f"Range: {stats['range']:.3f} (Min: {stats['min']:.3f}, Max: {stats['max']:.3f})",
-        f"Sample Count: {stats['count']}",
-        f"Process Capability Index (Cp): {stats['cp']:.3f}" if stats['cp'] is not None else "Process Capability Index (Cp): N/A",
-        f"Process Capability Index (centered) (Cpk): {stats['cpk']:.3f}" if stats['cpk'] is not None else "Process Capability Index (centered) (Cpk): N/A"
-    ])
+    def fmt(val, precision=3):
+        return f"{val:.{precision}f}" if val is not None else "N/A"
+
+    stats_lines = [
+        "<b>Process Statistics:</b>",
+        f"Mean: {fmt(stats.get('mean'))}",
+        f"Std Dev: {fmt(stats.get('stddev'))}",
+        f"UCL: {fmt(stats.get('ucl'))}, LCL: {fmt(stats.get('lcl'))}",
+        f"Range: {fmt(stats.get('range'))} (Min: {fmt(stats.get('min'))}, Max: {fmt(stats.get('max'))})",
+        f"Sample Count: {stats.get('count', 'N/A')}",
+        f"Process Capability Index (Cp): {fmt(capability_stats.get('cp'))}",
+        f"Process Capability Index (centered) (Cpk): {fmt(capability_stats.get('cpk'))}"
+    ]
+    
+    stat_text = "<br>".join(stats_lines)
     
     fig.add_annotation(
         xref='paper',

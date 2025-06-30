@@ -4,23 +4,22 @@ from components.rule_boxes import create_rule_boxes
 from utils.data_loader import parse_csv, load_predefined_dataset
 from utils.data_processor import process_data
 from utils.chart_creator import create_control_chart
+from components.settings_toolbar import create_settings_toolbar
 from callbacks.rule_checkbox import get_active_rules
-import json
 
 
 def register_callbacks(app):
     # Callback to update the app state when settings change
     @app.callback(
         Output('app-state-store', 'data', allow_duplicate=True),
-        [Input('input-usl', 'value'),
-        Input('input-lsl', 'value'),
+        [Input('sl-range-slider', 'value'),
         Input('dropdown-period-type', 'value'),
         Input('input-process-change', 'value'),
         Input('input-y-axis-label', 'value')],
         [State('app-state-store', 'data')],
         prevent_initial_call=True
     )
-    def update_app_state_settings(usl, lsl, period_type, process_change, y_axis_label, current_data):
+    def update_app_state_settings(range_slider, period_type, process_change, y_axis_label, current_data):
         """Update the app state with settings values"""
         # Initialize app state if None
         if current_data is None:
@@ -31,10 +30,9 @@ def register_callbacks(app):
             current_data['settings'] = {}
             
         # Update only the properties that have changed
-        if ctx.triggered_id == 'input-usl' and usl is not None:
-            current_data['settings']['usl'] = usl
-        elif ctx.triggered_id == 'input-lsl' and lsl is not None:
-            current_data['settings']['lsl'] = lsl
+        if ctx.triggered_id == 'sl-range-slider' and range_slider is not None:
+            current_data['settings']['lsl'] = range_slider[0]
+            current_data['settings']['usl'] = range_slider[1]
         elif ctx.triggered_id == 'dropdown-period-type' and period_type is not None:
             current_data['settings']['period_type'] = period_type
         elif ctx.triggered_id == 'input-process-change' and process_change is not None:
@@ -55,6 +53,7 @@ def register_callbacks(app):
         Output('upload-card', 'className'),
         Output('btn-in-control', 'className'),
         Output('btn-out-of-control', 'className'),
+        Output('settings-toolbar-container', 'children'),
         Output('settings-toolbar-container', 'style')],
         [Input('upload-data', 'contents'),
         Input('btn-in-control', 'n_clicks'),
@@ -84,7 +83,7 @@ def register_callbacks(app):
         
         if not ctx.triggered:
             # No triggers, return empty outputs with visible empty state
-            return html.Div(style={'display': 'none'}), None, None, empty_state_style, None, download_container_style, create_rule_boxes(), upload_class, in_control_class, out_control_class, settings_toolbar_style
+            return html.Div(style={'display': 'none'}), None, None, empty_state_style, None, download_container_style, create_rule_boxes(), upload_class, in_control_class, out_control_class, None, settings_toolbar_style
         
         trigger_id = ctx.triggered[0]['prop_id'].split('.')[0]
         
@@ -124,13 +123,13 @@ def register_callbacks(app):
             # No valid triggers, return current state with visible empty state
             return html.Div(style={'display': 'none'}), html.Div(style={'display': 'none'}), stored_data, empty_state_style, None, download_container_style, create_rule_boxes(), upload_class, in_control_class, out_control_class, settings_toolbar_style
         if df is None:
-            return html.Div('Error processing the data.'), html.Div(style={'display': 'none'}), None, empty_state_style, None, download_container_style, create_rule_boxes(), upload_class, in_control_class, out_control_class, settings_toolbar_style
+            return html.Div('Error processing the data.'), html.Div(style={'display': 'none'}), None, empty_state_style, None, download_container_style, create_rule_boxes(), upload_class, in_control_class, out_control_class, None, settings_toolbar_style
         
         # Process the data with active rules
-        df_with_rules, stats = process_data(df, active_rules, usl_value, lsl_value)
+        df_with_rules, stats, capability = process_data(df, active_rules, usl_value, lsl_value)
         
         # Create the plot with active rules
-        fig = create_control_chart(df_with_rules, stats, active_rules, settings)
+        fig = create_control_chart(df_with_rules, stats, capability or {}, active_rules, settings)
         plot_component = dcc.Graph(figure=fig)
         
         # Create the data table
@@ -208,6 +207,9 @@ def register_callbacks(app):
         # Hide empty state and show download button when data is loaded
         empty_state_style = {'display': 'none'}
         download_container_style = {'display': 'block', 'marginBottom': '10px'}
-        settings_toolbar_style = {'display': 'block'}
+        settings_toolbar = create_settings_toolbar((stats['min'], stats['max']))
+        settings_toolbar_style = {
+            'display': 'block'
+            }
         
-        return plot_component, data_info, stored_data, empty_state_style, processed_data, download_container_style, create_rule_boxes(), upload_class, in_control_class, out_control_class, settings_toolbar_style
+        return plot_component, data_info, stored_data, empty_state_style, processed_data, download_container_style, create_rule_boxes(), upload_class, in_control_class, out_control_class, settings_toolbar, settings_toolbar_style
