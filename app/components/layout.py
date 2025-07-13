@@ -1,5 +1,6 @@
 from dash import html, dcc
 from components.settings_toolbar import create_settings_toolbar
+from components.rule_boxes import create_rule_boxes
 
 def create_layout():
     """Create the main app layout"""
@@ -56,7 +57,7 @@ def create_layout():
         # Rule boxes container - just create an empty container
         html.Div([
             html.H3("Nelson Rules for Control Charts", className="rule-section-title"),
-            # rule_boxes will be added here in app.py
+            create_rule_boxes()
         ], id='rule-boxes-container', className='rule-boxes-container'),
         
         # Plot container
