@@ -1,5 +1,4 @@
-from dash import Input, Output, callback, ALL, MATCH, State
-import json
+from dash import Input, Output, callback, State
 
 def get_active_rules(app_state):
     """
