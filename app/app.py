@@ -11,9 +11,6 @@ app = Dash(__name__, server=server, suppress_callback_exceptions=True)
 
 layout = create_layout()
 
-# Add the app-state-store div for all app state (rules, settings, etc.)
-layout.children.append(dcc.Store(id='app-state-store', storage_type='memory', data={}))
-
 # Set the app layout
 app.layout = layout
 
