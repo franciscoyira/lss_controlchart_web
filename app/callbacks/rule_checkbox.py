@@ -30,7 +30,6 @@ def get_active_rules(app_state):
     
     return active_rules
 
-# Callback to update app state store when any checkbox changes
 @callback(
     Output('app-state-store', 'data', allow_duplicate=True),
     [Input(f'rule-check-{i}', 'value') for i in range(1, 9)],
@@ -39,37 +38,26 @@ def get_active_rules(app_state):
 )
 def update_rule_state(*args):
     """Update the rule state when any checkbox changes"""
-    # Last element in args is the current app state
-    checkbox_values = args[:-1]
-    current_state = args[-1] or {}
+    checkbox_values = args[:-1] # [Input(f'rule-check-{i}'... list of 8 lists (each from a checkbox)
+    current_state = args[-1] or {} # [State('app-state-store'... the current state dict from the store
     
-    # Initialize rules dict if it doesn't exist
-    if 'rules' not in current_state:
-        current_state['rules'] = {}
-    
-    # Update rule states
-    for i, value in enumerate(checkbox_values, 1):
-        current_state['rules'][f'rule-{i}'] = bool(value and f'rule-{i}' in value)
+    # Writing the checkboxes values to the current state
+    current_state['rules'] = {
+        f'rule-{i}': bool(val) 
+        for i, val in enumerate(checkbox_values, 1)
+    }
     
     return current_state
 
-# Callback to update rule box appearance when app state changes
 @callback(
     [Output(f'rule-box-{i}', 'className') for i in range(1, 9)],
     [Input('app-state-store', 'data')]
 )
 def update_rule_boxes(app_state):
     """Update the rule box appearance based on app state"""
-    if not app_state or not isinstance(app_state, dict) or 'rules' not in app_state:
-        # Return default classes if no state is provided
-        return ['rule-box selected' for _ in range(8)]
+    rule_state = (app_state or {}).get('rules', {})
     
-    # Get the rule states from app state
-    rule_state = app_state.get('rules', {})
-    
-    classes = []
-    for i in range(1, 9):
-        rule_key = f'rule-{i}'
-        is_selected = rule_state.get(rule_key, True)
-        classes.append('rule-box selected' if is_selected else 'rule-box')
-    return classes
+    return [
+        'rule-box selected' if rule_state.get(f'rule-{i}', True) else 'rule-box'
+        for i in range(1, 9)
+    ]

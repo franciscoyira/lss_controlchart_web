@@ -88,7 +88,10 @@ def create_layout():
         dcc.Store(id='processed-data-store'),
         
         # Store for UI state and settings
-        dcc.Store(id='app-state-store', storage_type='memory', data={}),
+        dcc.Store(
+            id='app-state-store',
+            storage_type='memory',
+            data={}),
         
         # Footer with references
         create_footer()
