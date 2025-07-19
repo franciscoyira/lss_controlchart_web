@@ -29,7 +29,6 @@ def create_settings_toolbar(range_data = None):
         html.Div([
             html.Label(
                 "Upper and Lower Specification Limits:", className="toolbar-label"),
-            # TODO: make the slider values come from the data
             dcc.RangeSlider(
                 min= defaults['slider_min'],
                 max= defaults['slider_max'],
