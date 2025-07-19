@@ -9,11 +9,11 @@ def create_layout():
         html.Img(
             src="/assets/home_icon.svg",  # Use a home icon, or just text: "Home"
             alt="Home",
+            title= "Home",
             style={
                 "height": "44px",
                 "verticalAlign": "middle",
-                "marginRight": "16px"
-            }
+                "marginRight": "16px"            }
         ),
         href="/",   # Root/home
         style={
