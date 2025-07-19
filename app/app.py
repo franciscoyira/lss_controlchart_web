@@ -2,7 +2,7 @@ from dash import Dash, html, dcc
 from flask import Flask
 
 from components.layout import create_layout
-from callbacks.data_processing import register_callbacks
+from callbacks.data_processing import register_data_processing_callbacks
 from callbacks.download import register_download_callback
 
 # Initialize Flask and Dash
@@ -14,7 +14,7 @@ layout = create_layout()
 # Set the app layout
 app.layout = layout
 
-register_callbacks(app)
+register_data_processing_callbacks(app)
 register_download_callback(app)
 
 if __name__ == '__main__':

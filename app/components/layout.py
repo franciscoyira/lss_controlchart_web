@@ -1,11 +1,32 @@
 from dash import html, dcc
-from components.settings_toolbar import create_settings_toolbar
 from components.rule_boxes import create_rule_boxes
 
 def create_layout():
     """Create the main app layout"""
     return html.Div([
-        html.H1('Process Behaviour Chart Tool - Lean Six Sigma', className='app-header'),
+        html.Div([
+    html.A(
+        html.Img(
+            src="/assets/home_icon.svg",  # Use a home icon, or just text: "Home"
+            alt="Home",
+            style={
+                "height": "44px",
+                "verticalAlign": "middle",
+                "marginRight": "16px"
+            }
+        ),
+        href="/",   # Root/home
+        style={
+            "display": "flex",
+            "alignItems": "center",
+            "textDecoration": "none"
+        }
+    ),
+    html.H1(
+        'Process Behaviour Chart Tool - Lean Six Sigma',
+        className='app-header-title'
+    ),
+], className="app-header"),
         
         # Card-style layout for data selection options
         html.Div([
@@ -61,6 +82,8 @@ def create_layout():
         ], id='rule-boxes-container', className='rule-boxes-container'),
         
         # Plot container
+        html.Div(id="stats-panel-container"),
+        
         html.Div(id='plot-container'),
 
         # Display the uploaded data info
@@ -94,12 +117,7 @@ def create_layout():
             data={}),
         
         # Footer with references
-        create_footer()
-    ])
-
-def create_footer():
-    """Create the footer component with references"""
-    return html.Div([
+        html.Div([
         html.Hr(className='footer-hr'),
         html.Div([
             # References section with updated heading style
@@ -130,3 +148,4 @@ def create_footer():
             ], className='creator-attribution')
         ], className='footer-content')
     ], className='app-footer')
+    ])

@@ -2,7 +2,7 @@ import plotly.express as px
 import polars as pl
 from plotly.graph_objects import Figure
 import plotly.graph_objects as go
-
+from dash import html
 
 def create_control_chart(
     df: pl.DataFrame,
@@ -56,8 +56,7 @@ def create_control_chart(
             y=stats[key],
             line_dash="dash",
             line_color=color,
-            annotation_text=text,
-            annotation=dict(font_color=color) if text else None
+            annotation=dict(font_color=color, text=text) if text else None
         )
     
     # Add zone annotations to the left side for top areas
@@ -149,47 +148,72 @@ def create_control_chart(
             )
         )
     
-    # Update layout to add more height for annotations
     fig.update_layout(
         xaxis_title=settings.get('period_type', 'Observation'),
         yaxis_title=settings.get('y_axis_label', 'Value'),
         showlegend=False,
         hovermode='closest',
-        height=700,  # Increase height to accommodate stats better
-        margin=dict(b=200)  # Increase bottom margin for stats
-    )
+        height=500)
     
     # Add descriptive statistics at the bottom
+    # def fmt(val, precision=3):
+    #     return f"{val:.{precision}f}" if val is not None else "N/A"
+
+    # stats_lines = [
+    #     "<b>Process Statistics:</b>",
+    #     f"Mean: {fmt(stats.get('mean'))}",
+    #     f"Std Dev: {fmt(stats.get('stddev'))}",
+    #     f"UCL: {fmt(stats.get('ucl'))}, LCL: {fmt(stats.get('lcl'))}",
+    #     f"Range: {fmt(stats.get('range'))} (Min: {fmt(stats.get('min'))}, Max: {fmt(stats.get('max'))})",
+    #     f"Sample Count: {stats.get('count', 'N/A')}",
+    #     f"Process Capability Index (Cp): {fmt(capability_stats.get('cp'))}",
+    #     f"Process Capability Index (centered) (Cpk): {fmt(capability_stats.get('cpk'))}"
+    # ]
+    
+    # stat_text = "<br>".join(stats_lines)
+    
+    # fig.add_annotation(
+    #     xref='paper',
+    #     yref='paper',
+    #     x=0.5,
+    #     y=1.12,  # ABOVE the plot area
+    #     text=stat_text,
+    #     showarrow=False,
+    #     font=dict(size=15, color="#1f2c3a"),
+    #     align='center',
+    #     bordercolor='rgba(100,120,180,0.25)',
+    #     borderwidth=1,
+    #     borderpad=8,
+    #     bgcolor='rgba(245,250,255,0.85)',  # glassy light blue
+    #     opacity=0.95,
+    #     # No direct border radius support; use lots of padding for a soft look
+    # )
+
+    
+    return fig
+
+def make_stats_panel(stats, capability_stats):
     def fmt(val, precision=3):
         return f"{val:.{precision}f}" if val is not None else "N/A"
 
-    stats_lines = [
-        "<b>Process Statistics:</b>",
-        f"Mean: {fmt(stats.get('mean'))}",
-        f"Std Dev: {fmt(stats.get('stddev'))}",
-        f"UCL: {fmt(stats.get('ucl'))}, LCL: {fmt(stats.get('lcl'))}",
-        f"Range: {fmt(stats.get('range'))} (Min: {fmt(stats.get('min'))}, Max: {fmt(stats.get('max'))})",
-        f"Sample Count: {stats.get('count', 'N/A')}",
-        f"Process Capability Index (Cp): {fmt(capability_stats.get('cp'))}",
-        f"Process Capability Index (centered) (Cpk): {fmt(capability_stats.get('cpk'))}"
+    items = [
+        ("Mean", fmt(stats.get('mean'))),
+        ("Std Dev", fmt(stats.get('std_dev'))),
+        ("UCL", fmt(stats.get('ucl'))),
+        ("LCL", fmt(stats.get('lcl'))),
+        ("Range", fmt(stats.get('range'))),
+        ("Min", fmt(stats.get('min'))),
+        ("Max", fmt(stats.get('max'))),
+        ("Sample Count", stats.get('count', 'N/A')),
+        ("Cp", fmt(capability_stats.get('cp'))),
+        ("Cpk", fmt(capability_stats.get('cpk'))),
     ]
-    
-    stat_text = "<br>".join(stats_lines)
-    
-    fig.add_annotation(
-        xref='paper',
-        yref='paper',
-        x=0.5,
-        y=-0.45,  # Move the annotation lower
-        text=stat_text,
-        showarrow=False,
-        font=dict(size=12),
-        align='center',
-        bordercolor='black',
-        borderwidth=1,
-        borderpad=4,
-        bgcolor='white',
-        opacity=0.8
-    )
-    
-    return fig
+    return html.Div([
+        html.Div("Process Statistics", className="stats-panel-title"),
+        html.Div([
+            html.Div([
+                html.Span(k + ":", className="stat-key"),
+                html.Span(v, className="stat-value"),
+            ], className="stat-row") for k, v in items
+        ], className="stats-panel-grid")
+    ], className="stats-panel")

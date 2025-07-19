@@ -1,27 +1,44 @@
+""" 
+**`components/settings_toolbar.py`**
+
+**Exports:** `create_settings_toolbar(range_data=None)`
+**Purpose:** Returns a Div containing the *settings toolbar* UI (controls for upper/lower limits, period type, process change, y-label).
+
+**Major Elements:**
+
+  * `dcc.RangeSlider` (id: `sl-range-slider`): sets USL/LSL, min/max optionally set via `range_data`
+  * `dcc.Dropdown` (id: `dropdown-period-type`)
+  * `dcc.Input` (id: `input-process-change`)
+  * `dcc.Input` (id: `input-y-axis-label`)
+* **Pattern:** UI factory; most are hardcoded, but `range_data` is dynamic.
+
+"""
+
 from dash import html, dcc
+from utils.slider_defaults import get_slider_defaults, make_marks
+
 
 def create_settings_toolbar(range_data = None):
     """Create a horizontal toolbar for settings with labels to the left of their controls"""
     
-    min_data, max_data, step = 1, 10, 1
-    if range_data and len(range_data) == 2:
-        min_data = range_data[0]
-        max_data = range_data[1]
-        step = (max_data - min_data)/5
-        
+    # Assume you always have range_data = (min, max)
+    defaults = get_slider_defaults(range_data)
+
     return html.Div([
         # USL (Upper Specification Limit)
         html.Div([
             html.Label(
                 "Upper and Lower Specification Limits:", className="toolbar-label"),
-            # TODO: make the slider values come from the data
             dcc.RangeSlider(
-                min=min_data,
-                max=max_data,
-                step=step,
+                min= defaults['slider_min'],
+                max= defaults['slider_max'],
+                dots=False,
+                marks=make_marks(defaults['lsl'], defaults['usl']),
                 className='toolbar-rangeslider',
-                value=[5, 10],
+                value=[defaults['lsl'], defaults['usl']],
                 id='sl-range-slider',
+                #pushable=step/10,
+                tooltip={"placement": "top", "always_visible": True},
                 persistence=True,
                 persistence_type='memory')
         ], className="toolbar-item"),

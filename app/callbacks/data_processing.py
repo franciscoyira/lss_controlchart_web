@@ -1,14 +1,40 @@
+"""
+Exports: register_callbacks(app) (no top-level code, only functions)
+
+Purpose: Wires together all the app’s "heavy lifting" — data loading, processing, settings management, and UI updates.
+
+Major Callbacks:
+
+1. Settings Update:
+    Inputs: Toolbar elements
+
+    Output: app-state-store['data']
+
+    Purpose: Sync UI state to global app state.
+
+2. Output Update:
+
+    Inputs: Uploads, sample data buttons, settings
+
+    Outputs: Dataframes, plots, empty state, download options, rule boxes, toolbar
+
+    Purpose: End-to-end update of all UI/display elements as user interacts.
+
+Pattern: Reactive chain — changes in controls or data upload → update app state → recalculate & update outputs/UI.
+"""
+
 from dash import Output, Input, State, html, dcc, dash_table, ctx, ALL, MATCH
 # Import your utility functions
 from components.rule_boxes import create_rule_boxes
 from utils.data_loader import parse_csv, load_predefined_dataset
-from utils.data_processor import process_data
-from utils.chart_creator import create_control_chart
+from utils.data_processor import calculate_capability, calculate_control_stats, add_control_rules
+from utils.slider_defaults import get_slider_defaults
+from utils.chart_creator import create_control_chart, make_stats_panel
 from components.settings_toolbar import create_settings_toolbar
 from callbacks.rule_checkbox import get_active_rules
 
 
-def register_callbacks(app):
+def register_data_processing_callbacks(app):
     # Callback to update the app state when settings change
     @app.callback(
         Output('app-state-store', 'data', allow_duplicate=True),
@@ -21,6 +47,7 @@ def register_callbacks(app):
     )
     def update_app_state_settings(range_slider, period_type, process_change, y_axis_label, current_data):
         """Update the app state with settings values"""
+        print("Slider callback fired, value:", range_slider)
         # Initialize app state if None
         if current_data is None:
             current_data = {}
@@ -43,7 +70,8 @@ def register_callbacks(app):
         return current_data
     
     @app.callback(
-        [Output('plot-container', 'children'),
+        [Output('stats-panel-container', 'children'),
+        Output('plot-container', 'children'),
         Output('output-data-upload', 'children'),
         Output('stored-data', 'data'),
         Output('empty-state', 'style'),
@@ -64,6 +92,8 @@ def register_callbacks(app):
     )
     def update_output(contents, in_control_clicks, out_control_clicks, app_state, filename, stored_data):
         """Update the output based on user interactions"""
+        print("app_state in update_output:", app_state)
+
         empty_state_style = {'margin': '40px auto', 'maxWidth': '800px'} # Default visible
         download_container_style = {'display': 'none'} # Default hidden
         settings_toolbar_style = {'display': 'none'} # Default hidden
@@ -76,14 +106,9 @@ def register_callbacks(app):
         # Get active rules from the app state
         active_rules = get_active_rules(app_state)
         
-        # Get settings values from app state
-        settings = app_state.get('settings', {}) if app_state else {}
-        usl_value = settings.get('usl')
-        lsl_value = settings.get('lsl')
-        
         if not ctx.triggered:
             # No triggers, return empty outputs with visible empty state
-            return html.Div(style={'display': 'none'}), None, None, empty_state_style, None, download_container_style, create_rule_boxes(), upload_class, in_control_class, out_control_class, None, settings_toolbar_style
+            return html.Div(style={'display': 'none'}),html.Div(style={'display': 'none'}), None, None, empty_state_style, None, download_container_style, create_rule_boxes(), upload_class, in_control_class, out_control_class, None, settings_toolbar_style
         
         trigger_id = ctx.triggered[0]['prop_id'].split('.')[0]
         
@@ -107,7 +132,7 @@ def register_callbacks(app):
                 df = load_predefined_dataset('out_of_control.csv')
             else:
                 # Need to ask the user to reload their custom data since we can't access it after upload
-                return html.Div([
+                return html.Div(style={'display': 'none'}), html.Div([
                     html.P("To apply rule changes to your custom data, please re-upload your file.", className="warning-text")
                 ]), None, stored_data, {'display': 'none'}, None, {'display': 'none'}, create_rule_boxes(), upload_class, in_control_class, out_control_class, {'display': 'none'}
         elif trigger_id == 'upload-data' and contents is not None:
@@ -121,16 +146,27 @@ def register_callbacks(app):
             dataset_name = 'out_of_control.csv'
         else:
             # No valid triggers, return current state with visible empty state
-            return html.Div(style={'display': 'none'}), html.Div(style={'display': 'none'}), stored_data, empty_state_style, None, download_container_style, create_rule_boxes(), upload_class, in_control_class, out_control_class, settings_toolbar_style
+            return html.Div(style={'display': 'none'}), html.Div(style={'display': 'none'}), html.Div(style={'display': 'none'}), stored_data, empty_state_style, None, download_container_style, create_rule_boxes(), upload_class, in_control_class, out_control_class, settings_toolbar_style
         if df is None:
-            return html.Div('Error processing the data.'), html.Div(style={'display': 'none'}), None, empty_state_style, None, download_container_style, create_rule_boxes(), upload_class, in_control_class, out_control_class, None, settings_toolbar_style
+            return html.Div(style={'display': 'none'}),html.Div('Error processing the data.'), html.Div(style={'display': 'none'}), None, empty_state_style, None, download_container_style, create_rule_boxes(), upload_class, in_control_class, out_control_class, None, settings_toolbar_style
         
         # Process the data with active rules
-        df_with_rules, stats, capability = process_data(df, active_rules, usl_value, lsl_value)
+        df = df.rename({df.columns[0]: "value"}).with_row_index()
+        stats = calculate_control_stats(df)
+        
+        defaults = get_slider_defaults((stats['min'], stats['max']))
+        settings = app_state.get('settings', {}) if app_state else {}
+
+        lsl_value = settings.get('lsl', defaults['lsl'])
+        usl_value = settings.get('usl', defaults['usl'])
+        
+        capability = calculate_capability(stats['mean'], stats['std_dev'], usl_value, lsl_value)
+        df_with_rules = add_control_rules(df, stats, active_rules)
         
         # Create the plot with active rules
         fig = create_control_chart(df_with_rules, stats, capability or {}, active_rules, settings)
         plot_component = dcc.Graph(figure=fig)
+        stats_panel = make_stats_panel(stats, capability)
         
         # Create the data table
         data_info = html.Div([
@@ -212,4 +248,4 @@ def register_callbacks(app):
             'display': 'block'
             }
         
-        return plot_component, data_info, stored_data, empty_state_style, processed_data, download_container_style, create_rule_boxes(), upload_class, in_control_class, out_control_class, settings_toolbar, settings_toolbar_style
+        return stats_panel, plot_component, data_info, stored_data, empty_state_style, processed_data, download_container_style, create_rule_boxes(), upload_class, in_control_class, out_control_class, settings_toolbar, settings_toolbar_style
