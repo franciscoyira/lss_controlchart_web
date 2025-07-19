@@ -180,7 +180,7 @@ def process_data(df, active_rules=None, usl=None, lsl=None):
     
     # Calculate data-driven stats and capability stats
     data_stats = calculate_control_stats(df)
-    capability_stats = calculate_capability(df, usl, lsl)
+    capability_stats = calculate_capability(data_stats['min'], data_stats['max'], usl, lsl)
     
     # Add control rules
     df_with_rules = add_control_rules(df, data_stats, active_rules)

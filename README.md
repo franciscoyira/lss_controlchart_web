@@ -41,21 +41,24 @@ flowchart TD
     ruleboxes-.->cb1
     store3 --> cb2[update_rule_boxes]
     store3 --> cb1[update_rule_state]
+    tb_cb((update_output)) --"injects toolbar<br>when data loaded"--> toolbar
 
     subgraph components
         cr_layout
     end
 
-   subgraph callbacks
+    subgraph callbacks
         cb2
         cb1
-   end
+        tb_cb
+        upd_sett((update_app_state_settings))
+    end
 
-   subgraph layout
+    subgraph layout
       ruleboxes
-   end
+      toolbar[settings-toolbar-container<br>div]
+    end
 ```
-
 
 ### Data Stores (dcc.Store)
 

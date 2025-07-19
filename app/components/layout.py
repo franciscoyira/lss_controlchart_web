@@ -1,5 +1,4 @@
 from dash import html, dcc
-from components.settings_toolbar import create_settings_toolbar
 from components.rule_boxes import create_rule_boxes
 
 def create_layout():
@@ -94,12 +93,7 @@ def create_layout():
             data={}),
         
         # Footer with references
-        create_footer()
-    ])
-
-def create_footer():
-    """Create the footer component with references"""
-    return html.Div([
+        html.Div([
         html.Hr(className='footer-hr'),
         html.Div([
             # References section with updated heading style
@@ -130,3 +124,4 @@ def create_footer():
             ], className='creator-attribution')
         ], className='footer-content')
     ], className='app-footer')
+    ])

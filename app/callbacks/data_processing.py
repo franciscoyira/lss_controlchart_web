@@ -1,3 +1,28 @@
+"""
+Exports: register_callbacks(app) (no top-level code, only functions)
+
+Purpose: Wires together all the app’s "heavy lifting" — data loading, processing, settings management, and UI updates.
+
+Major Callbacks:
+
+1. Settings Update:
+    Inputs: Toolbar elements
+
+    Output: app-state-store['data']
+
+    Purpose: Sync UI state to global app state.
+
+2. Output Update:
+
+    Inputs: Uploads, sample data buttons, settings
+
+    Outputs: Dataframes, plots, empty state, download options, rule boxes, toolbar
+
+    Purpose: End-to-end update of all UI/display elements as user interacts.
+
+Pattern: Reactive chain — changes in controls or data upload → update app state → recalculate & update outputs/UI.
+"""
+
 from dash import Output, Input, State, html, dcc, dash_table, ctx, ALL, MATCH
 # Import your utility functions
 from components.rule_boxes import create_rule_boxes
@@ -8,7 +33,7 @@ from components.settings_toolbar import create_settings_toolbar
 from callbacks.rule_checkbox import get_active_rules
 
 
-def register_callbacks(app):
+def register_data_processing_callbacks(app):
     # Callback to update the app state when settings change
     @app.callback(
         Output('app-state-store', 'data', allow_duplicate=True),
@@ -21,6 +46,7 @@ def register_callbacks(app):
     )
     def update_app_state_settings(range_slider, period_type, process_change, y_axis_label, current_data):
         """Update the app state with settings values"""
+        print("Slider callback fired, value:", range_slider)
         # Initialize app state if None
         if current_data is None:
             current_data = {}
@@ -64,6 +90,8 @@ def register_callbacks(app):
     )
     def update_output(contents, in_control_clicks, out_control_clicks, app_state, filename, stored_data):
         """Update the output based on user interactions"""
+        print("app_state in update_output:", app_state)
+
         empty_state_style = {'margin': '40px auto', 'maxWidth': '800px'} # Default visible
         download_container_style = {'display': 'none'} # Default hidden
         settings_toolbar_style = {'display': 'none'} # Default hidden

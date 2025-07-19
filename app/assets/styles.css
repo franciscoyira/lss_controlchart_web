@@ -448,20 +448,31 @@
     display: flex;
     flex-direction: row;
     align-items: center;
-    margin-right: 20px;
+    margin-right: 23px;
 }
 
 .toolbar-label {
     font-size: 12px;
     font-weight: 500;
     color: #495057;
-    margin-right: 8px;
-    white-space: nowrap;
+    margin-right: 5px;
+    white-space: normal;
+    word-break: break-word;
+    max-width: 120px; /* adjust as needed */
 }
 
 .toolbar-rangeslider {
-    width: 160px;
+    min-width: 280px;
+    margin-top: -15px !important;
+    margin-bottom: -8px !important;
 }
+
+/* Lower mark font size and spacing */
+.rc-slider-mark-text {
+    font-size: 10px !important;
+
+}
+
 
 .toolbar-textbox-input {
     width: 80px;
