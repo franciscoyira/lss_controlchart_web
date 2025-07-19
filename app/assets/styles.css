@@ -2,11 +2,9 @@
 
 /* Header styles */
 .app-header {
-    text-align: center;
-    font-family: "Inter", "Segoe UI", system-ui, sans-serif;
-    font-size: 2rem;
-    font-weight: 500;
-    color: #fff;
+    display: flex;
+    align-items: center;
+    justify-content: center;
     background: linear-gradient(120deg, #0062cc, #0097e6, #00b894);
     background-size: 200% 200%;
     animation: gradient 15s ease infinite;
@@ -15,8 +13,17 @@
     margin-bottom: 8px;
     border-radius: 8px;
     box-shadow: 0 8px 16px rgba(0, 0, 0, 0.15);
-    letter-spacing: 0.3px;
     border: none;
+    /* Remove text-align: center */
+}
+
+.app-header-title {
+    font-family: "Inter", "Segoe UI", system-ui, sans-serif;
+    font-size: 2rem;
+    font-weight: 500;
+    color: #fff;
+    letter-spacing: 0.3px;
+    margin: 0 auto;
 }
 
 /* Option cards container */
@@ -433,15 +440,21 @@
 .settings-toolbar {
     display: flex;
     flex-wrap: wrap;
-    background-color: #f8f9fa;
-    border: 1px solid #e9ecef;
-    border-radius: 8px;
-    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-    padding: 5px 8px;
-    margin: 5px 10px;
-    align-items: center;
+    background: rgba(245,250,255,0.96);
+    box-shadow: 0 2px 4px 0 rgba(31, 38, 135, 0.12);
+    border: 1px solid rgba(100,120,180,0.10);
+    border-radius: 14px;
+    font-family: "Segoe UI", "Inter", system-ui, sans-serif;
+    color: #222d3d;
+    text-align: left;
+    padding: 10px 12px;
+    margin: 10px auto 6px auto;
+    align-items: baseline;
     justify-content: flex-start;
     gap: 10px;
+    width: 95%;
+    backdrop-filter: blur(3px);
+
 }
 
 .toolbar-item {
@@ -452,10 +465,10 @@
 }
 
 .toolbar-label {
-    font-size: 12px;
+    font-size: 13px;
     font-weight: 500;
-    color: #495057;
-    margin-right: 5px;
+    margin-right: 7px;
+    color: #54698d;
     white-space: normal;
     word-break: break-word;
     max-width: 120px; /* adjust as needed */
@@ -576,3 +589,51 @@
         width: 60%;
     }
 } 
+
+/* For the descriptive and capability stats*/
+.stats-panel {
+    margin: 10px auto 6px auto;
+    padding: 10px 12px;
+    background: rgba(245,250,255,0.96);
+    box-shadow: 0 2px 4px 0 rgba(31, 38, 135, 0.12);
+    border-radius: 14px;
+    border: 1px solid rgba(100,120,180,0.10);
+    font-family: "Segoe UI", "Inter", system-ui, sans-serif;
+    font-size: 13px;
+    color: #222d3d;
+    text-align: left;
+    width: 95%;
+    min-width: 320px;
+    backdrop-filter: blur(3px);
+}
+
+.stats-panel-title {
+    font-size: 15px;
+    font-weight: 600;
+    margin-bottom: 8px;
+    color: #154277;
+}
+
+.stats-panel-grid {
+    display: flex;
+    grid-template-columns: 1fr 1fr;
+    column-gap: 24px;
+    row-gap: 4px;
+}
+
+.stat-row {
+    display: flex;
+    align-items: baseline;
+    margin-bottom: 2px;
+}
+
+.stat-key {
+    font-weight: 500;
+    margin-right: 7px;
+    color: #54698d;
+}
+
+.stat-value {
+    font-family: "JetBrains Mono", "Fira Mono", monospace;
+    color: #253354;
+}
