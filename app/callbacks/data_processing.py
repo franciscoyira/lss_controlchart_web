@@ -168,8 +168,20 @@ def register_data_processing_callbacks(app):
 
         # 5. Update the 'outputs' dictionary with the new components
         outputs['stats_panel'] = make_stats_panel(stats, capability)
-        outputs['plot_component'] = dcc.Graph(figure=fig, config={
-        "displayModeBar": False})
+        outputs['plot_component'] = dcc.Graph(figure=fig,
+            config={
+                    "displayModeBar": "hover",
+                    "modeBarButtonsToRemove": ["zoom2d","pan2d","select2d","lasso2d",
+                                            "zoomIn2d","zoomOut2d","autoScale2d",
+                                            "resetScale2d","hoverClosestCartesian",
+                                            "hoverCompareCartesian","toggleSpikelines"],
+                    "displaylogo": False,
+                     "toImageButtonOptions": {
+                        "format": "png",
+                        "filename": "process_control_chart",
+                        "scale": 3    # 3x resolution
+                    }
+                })
         outputs['stored_data'] = {'dataset_name': dataset_name}
         outputs['processed_data'] = df_with_rules.to_dicts()
         outputs['empty_state_style'] = {'display': 'none'}
