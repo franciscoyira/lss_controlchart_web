@@ -9,7 +9,9 @@ def create_control_chart(
     stats: dict,
     capability_stats: dict = None,
     active_rules: dict = None,
-    settings=None) -> Figure:
+    settings=None,
+    usl_value=None,
+    lsl_value=None) -> Figure:
     """Create a control chart plot with all control stats
     
     Args:
@@ -57,6 +59,37 @@ def create_control_chart(
             line_dash="dash",
             line_color=color,
             annotation=dict(font_color=color, text=text) if text else None
+        )
+        
+    if lsl_value and usl_value:
+        fig.add_hline(
+            y=lsl_value,
+            line_dash="solid",
+            line_color="#03244f",
+        )
+
+        fig.add_annotation(
+            x=0.5, xref="paper",     # middle of plot width
+            y=lsl_value, yref="y",   # lock to LSL line
+            text="Lower Specification Limit",
+            showarrow=False,
+            xanchor="center",
+            yshift=-10,              # 15px below the line, independent of units
+            font=dict(color="#03244f"),
+            align="center"
+        )
+
+        fig.add_hline(
+            y=usl_value,
+            line_dash="solid",
+            line_color="#03244f",
+            annotation=dict(
+            font_color="#03244f",
+            x=0.5,
+            xref="paper",
+            xanchor="center",    
+            text="Upper Specification Limit",
+            align="center" )
         )
     
     # Add zone annotations to the left side for top areas
@@ -163,7 +196,7 @@ def create_control_chart(
         showlegend=False,
         hovermode='closest',
         height=500)
-    
+        
     return fig
 
 def make_stats_panel(stats, capability_stats):
