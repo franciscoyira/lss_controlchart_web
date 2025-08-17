@@ -82,7 +82,8 @@ def register_data_processing_callbacks(app):
         Output('btn-in-control', 'className'),
         Output('btn-out-of-control', 'className'),
         Output('settings-toolbar-container', 'children'),
-        Output('settings-toolbar-container', 'style')],
+        Output('settings-toolbar-container', 'style'),
+        Output('dataset-selector', 'style')],
         [Input('upload-data', 'contents'),
         Input('btn-in-control', 'n_clicks'),
         Input('btn-out-of-control', 'n_clicks'),
@@ -94,9 +95,11 @@ def register_data_processing_callbacks(app):
         """Update the output based on user interactions"""
         print("app_state in update_output:", app_state)
 
+        # Defaults for different layout components
         empty_state_style = {'margin': '40px auto', 'maxWidth': '800px'} # Default visible
         download_container_style = {'display': 'none'} # Default hidden
         settings_toolbar_style = {'display': 'none'} # Default hidden
+        dataset_selector_style = {'display': 'flex'} # Default visible
         
         # Default classes for buttons
         upload_class = 'option-card upload-card'
@@ -107,8 +110,8 @@ def register_data_processing_callbacks(app):
         active_rules = get_active_rules(app_state)
         
         if not ctx.triggered:
-            # No triggers, return empty outputs with visible empty state
-            return html.Div(style={'display': 'none'}),html.Div(style={'display': 'none'}), None, None, empty_state_style, None, download_container_style, create_rule_boxes(), upload_class, in_control_class, out_control_class, None, settings_toolbar_style
+            # No triggers, return defaults (e.g. empty outputs with visible empty state)
+            return html.Div(style={'display': 'none'}),html.Div(style={'display': 'none'}), None, None, empty_state_style, None, download_container_style, create_rule_boxes(), upload_class, in_control_class, out_control_class, None, settings_toolbar_style, dataset_selector_style
         
         trigger_id = ctx.triggered[0]['prop_id'].split('.')[0]
         
@@ -134,7 +137,7 @@ def register_data_processing_callbacks(app):
                 # Need to ask the user to reload their custom data since we can't access it after upload
                 return html.Div(style={'display': 'none'}), html.Div([
                     html.P("To apply rule changes to your custom data, please re-upload your file.", className="warning-text")
-                ]), None, stored_data, {'display': 'none'}, None, {'display': 'none'}, create_rule_boxes(), upload_class, in_control_class, out_control_class, {'display': 'none'}
+                ]), None, stored_data, {'display': 'none'}, None, {'display': 'none'}, create_rule_boxes(), upload_class, in_control_class, out_control_class, None, {'display': 'none'}, dataset_selector_style
         elif trigger_id == 'upload-data' and contents is not None:
             df = parse_csv(contents)
             dataset_name = filename
@@ -146,9 +149,9 @@ def register_data_processing_callbacks(app):
             dataset_name = 'out_of_control.csv'
         else:
             # No valid triggers, return current state with visible empty state
-            return html.Div(style={'display': 'none'}), html.Div(style={'display': 'none'}), html.Div(style={'display': 'none'}), stored_data, empty_state_style, None, download_container_style, create_rule_boxes(), upload_class, in_control_class, out_control_class, settings_toolbar_style
+            return html.Div(style={'display': 'none'}), html.Div(style={'display': 'none'}), html.Div(style={'display': 'none'}), stored_data, empty_state_style, None, download_container_style, create_rule_boxes(), upload_class, in_control_class, out_control_class, None, settings_toolbar_style, dataset_selector_style
         if df is None:
-            return html.Div(style={'display': 'none'}),html.Div('Error processing the data.'), html.Div(style={'display': 'none'}), None, empty_state_style, None, download_container_style, create_rule_boxes(), upload_class, in_control_class, out_control_class, None, settings_toolbar_style
+            return html.Div(style={'display': 'none'}),html.Div('Error processing the data.'), html.Div(style={'display': 'none'}), None, empty_state_style, None, download_container_style, create_rule_boxes(), upload_class, in_control_class, out_control_class, None, settings_toolbar_style, dataset_selector_style
         
         # Process the data with active rules
         df = df.rename({df.columns[0]: "value"}).with_row_index()
@@ -240,12 +243,13 @@ def register_data_processing_callbacks(app):
         # Store processed data for download
         processed_data = df_with_rules.to_dicts()
         
-        # Hide empty state and show download button when data is loaded
+        # Hide empty state and dataset selector and show download button when data is loaded
         empty_state_style = {'display': 'none'}
+        dataset_selector_style = {'display': 'none'}
         download_container_style = {'display': 'block', 'marginBottom': '10px'}
         settings_toolbar = create_settings_toolbar((stats['min'], stats['max']))
         settings_toolbar_style = {
             'display': 'block'
             }
         
-        return stats_panel, plot_component, data_info, stored_data, empty_state_style, processed_data, download_container_style, create_rule_boxes(), upload_class, in_control_class, out_control_class, settings_toolbar, settings_toolbar_style
+        return stats_panel, plot_component, data_info, stored_data, empty_state_style, processed_data, download_container_style, create_rule_boxes(), upload_class, in_control_class, out_control_class, settings_toolbar, settings_toolbar_style, dataset_selector_style

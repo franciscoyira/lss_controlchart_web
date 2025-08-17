@@ -10,9 +10,9 @@
     animation: gradient 8s linear infinite;
     padding: 10px 20px;
     margin-top: 8px;
-    margin-bottom: 8px;
+    margin-bottom: 16px;
     border-radius: 8px;
-    box-shadow: 0 8px 16px rgba(0, 0, 0, 0.15);
+    box-shadow: 0 8px 8px rgba(0, 0, 0, 0.15);
     border: none;
     /* Remove text-align: center */
 }
@@ -27,7 +27,7 @@
 }
 
 /* Option cards container */
-.data-options-container {
+.dataset-selector-container {
     display: flex;
     justify-content: space-between;
     margin: 20px auto;
