@@ -178,6 +178,41 @@ def register_data_processing_callbacks(app):
         outputs['settings_toolbar_style'] = {'display': 'block'}
         
         # Create the data table and assign to data_info
+        # Extract data and columns
+        table_data = df_with_rules.drop("index").to_dicts()
+        table_columns = [
+            {"name": i, "id": i} for i in df_with_rules.drop("index").columns
+            if not i.startswith('rule_') or active_rules.get(int(i.split('_')[1]), True)
+        ]
+        
+        # Get active rule columns for styling
+        active_rule_cols = [c for c in df_with_rules.columns 
+                           if c.startswith('rule_') and active_rules.get(int(c.split('_')[1]), True)]
+        
+        # Build filter queries
+        broken_filter = ' || '.join([f'{{{c}}} = "Broken"' for c in active_rule_cols])
+        
+        # Style configurations
+        style_table = {
+            'height': '300px', 'maxWidth': '100%', 'overflowY': 'auto', 
+            'overflowX': 'auto', 'borderRadius': '8px', 
+            'boxShadow': '0 2px 4px rgba(0,0,0,0.1)', 'border': '1px solid #e9ecef'
+        }
+        
+        style_cell_conditional = (
+            [{'if': {'column_id': 'value'}, 'textAlign': 'right'}] + 
+            [{'if': {'column_id': col}, 'textAlign': 'center'} for col in df_with_rules.columns if col.startswith('rule_')]
+        )
+        
+        style_data_conditional = [
+            {'if': {'filter_query': broken_filter}, 'backgroundColor': 'rgba(255, 240, 240, 0.7)'},
+            {'if': {'filter_query': broken_filter, 'column_id': 'value'}, 'fontWeight': 'bold', 'color': '#dc3545'}
+        ] + [
+            {'if': {'column_id': col, 'filter_query': f'{{{col}}} = "Broken"'}, 
+             'backgroundColor': 'rgba(220, 53, 69, 0.1)', 'color': '#dc3545', 'fontWeight': 'bold'} 
+            for col in active_rule_cols
+        ]
+        
         outputs['data_info'] = html.Div([
             html.Div([
                 html.Img(src='/assets/csv_icon.svg', className='data-source-icon'),
@@ -185,21 +220,14 @@ def register_data_processing_callbacks(app):
             ], className='data-source-header'),
             html.H6(f'Number of observations: {df_with_rules.shape[0]}'),
             dash_table.DataTable(
-                data=df_with_rules.drop("index").to_dicts(),
-                columns=[
-                    {"name": i, "id": i} for i in df_with_rules.drop("index").columns
-                    if not i.startswith('rule_') or active_rules.get(int(i.split('_')[1]), True)
-                ],
-                style_table={'height': '300px', 'maxWidth': '100%', 'overflowY': 'auto', 'overflowX': 'auto', 'borderRadius': '8px', 'boxShadow': '0 2px 4px rgba(0,0,0,0.1)', 'border': '1px solid #e9ecef'},
+                data=table_data,
+                columns=table_columns,
+                style_table=style_table,
                 cell_selectable=False,
-                style_cell_conditional=[{'if': {'column_id': 'value'}, 'textAlign': 'right'}] + 
-                                     [{'if': {'column_id': col}, 'textAlign': 'center'} for col in df_with_rules.columns if col.startswith('rule_')],
+                style_cell_conditional=style_cell_conditional,
                 style_cell={'padding': '10px 15px', 'fontFamily': '"Inter", "Segoe UI", system-ui, sans-serif', 'fontSize': '14px', 'color': '#495057'},
                 style_data={'border': '1px solid #e9ecef'},
-                style_data_conditional=[
-                    {'if': {'filter_query': ' || '.join([f'{{{c}}} = "Broken"' for c in df_with_rules.columns if c.startswith('rule_') and active_rules.get(int(c.split('_')[1]), True)])}, 'backgroundColor': 'rgba(255, 240, 240, 0.7)'},
-                    {'if': {'filter_query': ' || '.join([f'{{{c}}} = "Broken"' for c in df_with_rules.columns if c.startswith('rule_') and active_rules.get(int(c.split('_')[1]), True)]), 'column_id': 'value'}, 'fontWeight': 'bold', 'color': '#dc3545'}
-                ] + [{'if': {'column_id': col, 'filter_query': '{' + col + '} = "Broken"'}, 'backgroundColor': 'rgba(220, 53, 69, 0.1)', 'color': '#dc3545', 'fontWeight': 'bold'} for col in [c for c in df_with_rules.columns if c.startswith('rule_') and active_rules.get(int(c.split('_')[1]), True)]],
+                style_data_conditional=style_data_conditional,
                 style_header={'backgroundColor': '#f8f9fa', 'fontWeight': 'bold', 'border': '1px solid #e9ecef', 'borderBottom': '2px solid #dee2e6', 'color': '#0062cc', 'textAlign': 'left', 'padding': '12px 15px', 'fontFamily': '"Inter", "Segoe UI", system-ui, sans-serif'}
             )
         ], className='data-info-container')
