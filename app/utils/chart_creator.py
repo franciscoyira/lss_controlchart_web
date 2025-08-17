@@ -148,6 +148,15 @@ def create_control_chart(
             )
         )
     
+    fig.add_annotation(
+        text="<i>X-chart: Time-series for individual values</i>",
+        xref="paper", yref="paper",
+        x=1, y=1.06,
+        xanchor="right", yanchor="top",
+        showarrow=False,
+        font=dict(size=14)
+    )
+    
     fig.update_layout(
         xaxis_title=settings.get('period_type', 'Observation'),
         yaxis_title=settings.get('y_axis_label', 'Value'),
