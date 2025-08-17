@@ -164,11 +164,12 @@ def register_data_processing_callbacks(app):
         usl_value = settings.get('usl', defaults['usl'])
         capability = calculate_capability(stats['mean'], stats['std_dev'], usl_value, lsl_value)
         df_with_rules = add_control_rules(df, stats, active_rules)
-        fig = create_control_chart(df_with_rules, stats, capability or {}, active_rules, settings)
+        fig = create_control_chart(df_with_rules, stats, capability or {}, active_rules, settings, usl_value, lsl_value)
 
         # 5. Update the 'outputs' dictionary with the new components
         outputs['stats_panel'] = make_stats_panel(stats, capability)
-        outputs['plot_component'] = dcc.Graph(figure=fig)
+        outputs['plot_component'] = dcc.Graph(figure=fig, config={
+        "displayModeBar": False})
         outputs['stored_data'] = {'dataset_name': dataset_name}
         outputs['processed_data'] = df_with_rules.to_dicts()
         outputs['empty_state_style'] = {'display': 'none'}

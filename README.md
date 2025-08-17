@@ -37,14 +37,30 @@ flowchart TD
     app[app.py] --> cr_layout[create_layout]
     cb1 -.-> store3
     cb2 -->ruleboxes[rule checkboxes<br><i>rule-check-1 to rule-check-8</i>]
+    tb_cb -----> ccc & msp
+    ccc --> plot-container
+    msp --> stats-panel-container
 
     ruleboxes-.->cb1
     store3 --> cb2[update_rule_boxes]
     store3 --> cb1[update_rule_state]
     tb_cb((update_output)) --"injects toolbar<br>when data loaded"--> toolbar
-
+    
     subgraph components
         cr_layout
+    end
+
+
+    subgraph layout
+      ruleboxes
+      toolbar[settings-toolbar-container<br>div]
+      stats-panel-container
+      plot-container
+    end
+
+    subgraph utils
+      ccc[create_control_chart]
+      msp[make_stats_panel]
     end
 
     subgraph callbacks
@@ -54,10 +70,6 @@ flowchart TD
         upd_sett((update_app_state_settings))
     end
 
-    subgraph layout
-      ruleboxes
-      toolbar[settings-toolbar-container<br>div]
-    end
 ```
 
 ### Data Stores (dcc.Store)
