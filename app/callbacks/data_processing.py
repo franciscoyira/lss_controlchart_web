@@ -82,7 +82,8 @@ def register_data_processing_callbacks(app):
         Output('btn-in-control', 'className'),
         Output('btn-out-of-control', 'className'),
         Output('settings-toolbar-container', 'children'),
-        Output('settings-toolbar-container', 'style')],
+        Output('settings-toolbar-container', 'style'),
+        Output('dataset-selector', 'style')],
         [Input('upload-data', 'contents'),
         Input('btn-in-control', 'n_clicks'),
         Input('btn-out-of-control', 'n_clicks'),
@@ -93,159 +94,143 @@ def register_data_processing_callbacks(app):
     def update_output(contents, in_control_clicks, out_control_clicks, app_state, filename, stored_data):
         """Update the output based on user interactions"""
         print("app_state in update_output:", app_state)
-
-        empty_state_style = {'margin': '40px auto', 'maxWidth': '800px'} # Default visible
-        download_container_style = {'display': 'none'} # Default hidden
-        settings_toolbar_style = {'display': 'none'} # Default hidden
-        
-        # Default classes for buttons
-        upload_class = 'option-card upload-card'
-        in_control_class = 'option-card'
-        out_control_class = 'option-card'
-        
-        # Get active rules from the app state
         active_rules = get_active_rules(app_state)
-        
+
+        # 1. Initialize all 14 output variables with their default values
+        outputs = {
+            'stats_panel': html.Div(style={'display': 'none'}),
+            'plot_component': html.Div(style={'display': 'none'}),
+            'data_info': None,
+            'stored_data': stored_data,
+            'empty_state_style': {'margin': '40px auto', 'maxWidth': '800px'},
+            'processed_data': None,
+            'download_container_style': {'display': 'none'},
+            'rule_boxes': create_rule_boxes(),
+            'upload_class': 'option-card upload-card',
+            'in_control_class': 'option-card',
+            'out_control_class': 'option-card',
+            'settings_toolbar': None,
+            'settings_toolbar_style': {'display': 'none'},
+            'dataset_selector_style': {'display': 'flex'}
+        }
+
         if not ctx.triggered:
-            # No triggers, return empty outputs with visible empty state
-            return html.Div(style={'display': 'none'}),html.Div(style={'display': 'none'}), None, None, empty_state_style, None, download_container_style, create_rule_boxes(), upload_class, in_control_class, out_control_class, None, settings_toolbar_style
-        
+            return list(outputs.values())
+
         trigger_id = ctx.triggered[0]['prop_id'].split('.')[0]
-        
-        # Set active class based on triggered button
-        if trigger_id == 'upload-data' and contents is not None:
-            upload_class += ' active'
-        elif trigger_id == 'btn-in-control' and in_control_clicks > 0:
-            in_control_class += ' active'
-        elif trigger_id == 'btn-out-of-control' and out_control_clicks > 0:
-            out_control_class += ' active'
-        
         df = None
         dataset_name = None
-        
-        # If the app state changed, but we have stored data, reprocess it
-        if trigger_id == 'app-state-store' and stored_data and 'dataset_name' in stored_data:
+
+        # 2. Determine which dataset to load based on the trigger
+        if trigger_id == 'upload-data' and contents:
+            outputs['upload_class'] += ' active'
+            df = parse_csv(contents)
+            dataset_name = filename
+        elif trigger_id == 'btn-in-control' and in_control_clicks:
+            outputs['in_control_class'] += ' active'
+            df = load_predefined_dataset('in_control.csv')
+            dataset_name = 'in_control.csv'
+        elif trigger_id == 'btn-out-of-control' and out_control_clicks:
+            outputs['out_control_class'] += ' active'
+            df = load_predefined_dataset('out_of_control.csv')
+            dataset_name = 'out_of_control.csv'
+        elif trigger_id == 'app-state-store' and stored_data and 'dataset_name' in stored_data:
             dataset_name = stored_data['dataset_name']
             if dataset_name.startswith('in_control'):
                 df = load_predefined_dataset('in_control.csv')
             elif dataset_name.startswith('out_of_control'):
                 df = load_predefined_dataset('out_of_control.csv')
             else:
-                # Need to ask the user to reload their custom data since we can't access it after upload
-                return html.Div(style={'display': 'none'}), html.Div([
+                # Handle custom data case: ask user to re-upload
+                outputs['plot_component'] = html.Div([
                     html.P("To apply rule changes to your custom data, please re-upload your file.", className="warning-text")
-                ]), None, stored_data, {'display': 'none'}, None, {'display': 'none'}, create_rule_boxes(), upload_class, in_control_class, out_control_class, {'display': 'none'}
-        elif trigger_id == 'upload-data' and contents is not None:
-            df = parse_csv(contents)
-            dataset_name = filename
-        elif trigger_id == 'btn-in-control' and in_control_clicks > 0:
-            df = load_predefined_dataset('in_control.csv')
-            dataset_name = 'in_control.csv'
-        elif trigger_id == 'btn-out-of-control' and out_control_clicks > 0:
-            df = load_predefined_dataset('out_of_control.csv')
-            dataset_name = 'out_of_control.csv'
-        else:
-            # No valid triggers, return current state with visible empty state
-            return html.Div(style={'display': 'none'}), html.Div(style={'display': 'none'}), html.Div(style={'display': 'none'}), stored_data, empty_state_style, None, download_container_style, create_rule_boxes(), upload_class, in_control_class, out_control_class, settings_toolbar_style
+                ])
+                outputs['empty_state_style'] = {'display': 'none'}
+                outputs['dataset_selector_style'] = {'display': 'none'}
+                return list(outputs.values())
+
+        # 3. If no data was loaded, return the defaults
         if df is None:
-            return html.Div(style={'display': 'none'}),html.Div('Error processing the data.'), html.Div(style={'display': 'none'}), None, empty_state_style, None, download_container_style, create_rule_boxes(), upload_class, in_control_class, out_control_class, None, settings_toolbar_style
-        
-        # Process the data with active rules
+            if trigger_id == 'upload-data': # Handle upload error
+                 outputs['plot_component'] = html.Div('Error processing the data.')
+            return list(outputs.values())
+
+        # 4. Process data and generate outputs
         df = df.rename({df.columns[0]: "value"}).with_row_index()
         stats = calculate_control_stats(df)
-        
         defaults = get_slider_defaults((stats['min'], stats['max']))
         settings = app_state.get('settings', {}) if app_state else {}
-
         lsl_value = settings.get('lsl', defaults['lsl'])
         usl_value = settings.get('usl', defaults['usl'])
-        
         capability = calculate_capability(stats['mean'], stats['std_dev'], usl_value, lsl_value)
         df_with_rules = add_control_rules(df, stats, active_rules)
-        
-        # Create the plot with active rules
         fig = create_control_chart(df_with_rules, stats, capability or {}, active_rules, settings)
-        plot_component = dcc.Graph(figure=fig)
-        stats_panel = make_stats_panel(stats, capability)
+
+        # 5. Update the 'outputs' dictionary with the new components
+        outputs['stats_panel'] = make_stats_panel(stats, capability)
+        outputs['plot_component'] = dcc.Graph(figure=fig)
+        outputs['stored_data'] = {'dataset_name': dataset_name}
+        outputs['processed_data'] = df_with_rules.to_dicts()
+        outputs['empty_state_style'] = {'display': 'none'}
+        outputs['dataset_selector_style'] = {'display': 'none'}
+        outputs['download_container_style'] = {'display': 'block', 'marginBottom': '10px'}
+        outputs['settings_toolbar'] = create_settings_toolbar((stats['min'], stats['max']))
+        outputs['settings_toolbar_style'] = {'display': 'block'}
         
-        # Create the data table
-        data_info = html.Div([
+        # Create the data table and assign to data_info
+        # Extract data and columns
+        table_data = df_with_rules.drop("index").to_dicts()
+        table_columns = [
+            {"name": i, "id": i} for i in df_with_rules.drop("index").columns
+            if not i.startswith('rule_') or active_rules.get(int(i.split('_')[1]), True)
+        ]
+        
+        # Get active rule columns for styling
+        active_rule_cols = [c for c in df_with_rules.columns 
+                           if c.startswith('rule_') and active_rules.get(int(c.split('_')[1]), True)]
+        
+        # Build filter queries
+        broken_filter = ' || '.join([f'{{{c}}} = "Broken"' for c in active_rule_cols])
+        
+        # Style configurations
+        style_table = {
+            'height': '300px', 'maxWidth': '100%', 'overflowY': 'auto', 
+            'overflowX': 'auto', 'borderRadius': '8px', 
+            'boxShadow': '0 2px 4px rgba(0,0,0,0.1)', 'border': '1px solid #e9ecef'
+        }
+        
+        style_cell_conditional = (
+            [{'if': {'column_id': 'value'}, 'textAlign': 'right'}] + 
+            [{'if': {'column_id': col}, 'textAlign': 'center'} for col in df_with_rules.columns if col.startswith('rule_')]
+        )
+        
+        style_data_conditional = [
+            {'if': {'filter_query': broken_filter}, 'backgroundColor': 'rgba(255, 240, 240, 0.7)'},
+            {'if': {'filter_query': broken_filter, 'column_id': 'value'}, 'fontWeight': 'bold', 'color': '#dc3545'}
+        ] + [
+            {'if': {'column_id': col, 'filter_query': f'{{{col}}} = "Broken"'}, 
+             'backgroundColor': 'rgba(220, 53, 69, 0.1)', 'color': '#dc3545', 'fontWeight': 'bold'} 
+            for col in active_rule_cols
+        ]
+        
+        outputs['data_info'] = html.Div([
             html.Div([
                 html.Img(src='/assets/csv_icon.svg', className='data-source-icon'),
                 html.H5(f'Data source: {dataset_name}')
             ], className='data-source-header'),
             html.H6(f'Number of observations: {df_with_rules.shape[0]}'),
             dash_table.DataTable(
-                data=df_with_rules.drop("index").to_dicts(),
-                columns=[
-                    {"name": i, "id": i} for i in df_with_rules.drop("index").columns
-                    if not i.startswith('rule_') or active_rules.get(int(i.split('_')[1]), True)
-                ],
-                style_table={
-                    'height': '300px',
-                    'maxWidth': '100%',
-                    'overflowY': 'auto',
-                    'overflowX': 'auto',
-                    'borderRadius': '8px',
-                    'boxShadow': '0 2px 4px rgba(0,0,0,0.1)',
-                    'border': '1px solid #e9ecef'
-                },
+                data=table_data,
+                columns=table_columns,
+                style_table=style_table,
                 cell_selectable=False,
-                style_cell_conditional=[
-                    {'if': {'column_id': 'value'}, 'textAlign': 'right'}
-                ] + [
-                    {'if': {'column_id': c}, 'textAlign': 'center'} for c in [col for col in df_with_rules.columns if col.startswith('rule_')]
-                ],
-                style_cell={
-                    'padding': '10px 15px',
-                    'fontFamily': '"Inter", "Segoe UI", system-ui, sans-serif',
-                    'fontSize': '14px',
-                    'color': '#495057'
-                },
+                style_cell_conditional=style_cell_conditional,
+                style_cell={'padding': '10px 15px', 'fontFamily': '"Inter", "Segoe UI", system-ui, sans-serif', 'fontSize': '14px', 'color': '#495057'},
                 style_data={'border': '1px solid #e9ecef'},
-                style_data_conditional=[
-                    {
-                        'if': {'filter_query': ' || '.join([f'{{{c}}} = "Broken"' for c in df_with_rules.columns if c.startswith('rule_') and active_rules.get(int(c.split('_')[1]), True)])},
-                        'backgroundColor': 'rgba(255, 240, 240, 0.7)'
-                    },
-                    {
-                        'if': {'filter_query': ' || '.join([f'{{{c}}} = "Broken"' for c in df_with_rules.columns if c.startswith('rule_') and active_rules.get(int(c.split('_')[1]), True)]), 'column_id': 'value'},
-                        'fontWeight': 'bold',
-                        'color': '#dc3545'
-                    }
-                ] + [
-                    {
-                        'if': {'column_id': c, 'filter_query': '{' + c + '} = "Broken"'},
-                        'backgroundColor': 'rgba(220, 53, 69, 0.1)',
-                        'color': '#dc3545',
-                        'fontWeight': 'bold'
-                    } for c in [col for col in df_with_rules.columns if col.startswith('rule_') and active_rules.get(int(col.split('_')[1]), True)]
-                ],
-                style_header={
-                    'backgroundColor': '#f8f9fa',
-                    'fontWeight': 'bold',
-                    'border': '1px solid #e9ecef',
-                    'borderBottom': '2px solid #dee2e6',
-                    'color': '#0062cc',
-                    'textAlign': 'left',
-                    'padding': '12px 15px',
-                    'fontFamily': '"Inter", "Segoe UI", system-ui, sans-serif'
-                }
+                style_data_conditional=style_data_conditional,
+                style_header={'backgroundColor': '#f8f9fa', 'fontWeight': 'bold', 'border': '1px solid #e9ecef', 'borderBottom': '2px solid #dee2e6', 'color': '#0062cc', 'textAlign': 'left', 'padding': '12px 15px', 'fontFamily': '"Inter", "Segoe UI", system-ui, sans-serif'}
             )
         ], className='data-info-container')
-        
-        # Store current data
-        stored_data = {'dataset_name': dataset_name}
-        
-        # Store processed data for download
-        processed_data = df_with_rules.to_dicts()
-        
-        # Hide empty state and show download button when data is loaded
-        empty_state_style = {'display': 'none'}
-        download_container_style = {'display': 'block', 'marginBottom': '10px'}
-        settings_toolbar = create_settings_toolbar((stats['min'], stats['max']))
-        settings_toolbar_style = {
-            'display': 'block'
-            }
-        
-        return stats_panel, plot_component, data_info, stored_data, empty_state_style, processed_data, download_container_style, create_rule_boxes(), upload_class, in_control_class, out_control_class, settings_toolbar, settings_toolbar_style
+
+        # 6. The single return point
+        return list(outputs.values())

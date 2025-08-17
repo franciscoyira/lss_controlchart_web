@@ -57,7 +57,7 @@ def create_layout():
                     html.Div("Try out-of-control data")
                 ], className='card-content')
             ], id='btn-out-of-control', className='option-card'),
-        ], className='data-options-container'),
+        ], id='dataset-selector', className='dataset-selector-container'),
 
         # Empty state container - shows only when no data is loaded
         html.Div([
