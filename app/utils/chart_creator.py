@@ -155,41 +155,6 @@ def create_control_chart(
         hovermode='closest',
         height=500)
     
-    # Add descriptive statistics at the bottom
-    # def fmt(val, precision=3):
-    #     return f"{val:.{precision}f}" if val is not None else "N/A"
-
-    # stats_lines = [
-    #     "<b>Process Statistics:</b>",
-    #     f"Mean: {fmt(stats.get('mean'))}",
-    #     f"Std Dev: {fmt(stats.get('stddev'))}",
-    #     f"UCL: {fmt(stats.get('ucl'))}, LCL: {fmt(stats.get('lcl'))}",
-    #     f"Range: {fmt(stats.get('range'))} (Min: {fmt(stats.get('min'))}, Max: {fmt(stats.get('max'))})",
-    #     f"Sample Count: {stats.get('count', 'N/A')}",
-    #     f"Process Capability Index (Cp): {fmt(capability_stats.get('cp'))}",
-    #     f"Process Capability Index (centered) (Cpk): {fmt(capability_stats.get('cpk'))}"
-    # ]
-    
-    # stat_text = "<br>".join(stats_lines)
-    
-    # fig.add_annotation(
-    #     xref='paper',
-    #     yref='paper',
-    #     x=0.5,
-    #     y=1.12,  # ABOVE the plot area
-    #     text=stat_text,
-    #     showarrow=False,
-    #     font=dict(size=15, color="#1f2c3a"),
-    #     align='center',
-    #     bordercolor='rgba(100,120,180,0.25)',
-    #     borderwidth=1,
-    #     borderpad=8,
-    #     bgcolor='rgba(245,250,255,0.85)',  # glassy light blue
-    #     opacity=0.95,
-    #     # No direct border radius support; use lots of padding for a soft look
-    # )
-
-    
     return fig
 
 def make_stats_panel(stats, capability_stats):
