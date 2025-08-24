@@ -76,7 +76,7 @@ def create_rule_boxes():
     
     return html.Div([
         html.Div([
-            html.P("Control chart rules help identify exceptional variation  arising from special cause factors that are not always present in the process.", className='section-description')
+            html.P("The 8 Nelson Control chart rules help signals: identify episodes of exceptional variation arising from special causes that are not part of your process.", className='section-description')
         ], className='rules-header'),
         html.Div(rule_boxes, className='rule-boxes-grid')
     ], className='rules-section') 

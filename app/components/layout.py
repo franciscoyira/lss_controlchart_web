@@ -57,7 +57,7 @@ def create_layout():
                 className="waffle-menu-button"
             ),
             html.H1(
-                'Process Behaviour Chart Tool - Lean Six Sigma',
+                'HuronSPC — Statistical Process Control Tool',
                 className='app-header-title'
             ),
         ], className="app-header"),
@@ -106,14 +106,34 @@ def create_layout():
         ], id='dataset-selector', className='dataset-selector-container'),
 
         # Empty state container - shows only when no data is loaded
-        html.Div([
-            html.Img(src='/assets/control-chart-icon.svg', className='empty-state-icon'),
-            html.H2('Welcome to the Control Chart Analyzer', className='empty-state-heading'),
-            html.P('Start by uploading your data or selecting one of the example datasets above.',
-                  className='empty-state-text'),
-            html.P('This tool will analyze your process data against the 8 Nelson rules to identify unusual variation.',
-                  className='empty-state-text')
-        ], id='empty-state', className='empty-state'),
+        html.Div(
+            [
+            html.Img(src="/assets/control-chart-icon.svg", className="empty-state-icon"),
+            html.H2(
+            "Welcome to HuronSPC, a Statistical Process Control Tool",
+            className="empty-state-heading",
+            ),
+            html.P(
+            [
+            "HuronSPC will help you distinguish the ",
+            html.Strong("signal from the noise"),
+            " in your data.",
+            html.Br(), html.Br(),
+            "It will analyze your process data with Lean Six Sigma analysis methods (like the ",
+            html.Strong("8 Nelson rules"),
+            " below) to identify instances with unusual process behaviour.",
+            html.Br(),
+            html.P(
+            "Start by uploading your data or selecting one of the example datasets above.",
+            className="empty-state-text",
+            ),
+            ],
+            className="empty-state-text",
+            ),
+            ],
+            id="empty-state",
+            className="empty-state",
+        ),
         
         # Settings toolbar - shown only when data is loaded
         html.Div(
