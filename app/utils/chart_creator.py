@@ -26,14 +26,14 @@ def create_control_chart(
     """
     # Define rule descriptions for tooltips
     rule_descriptions = {
-        'rule_1': "Rule 1: Point beyond 3 sigma",
-        'rule_2': "Rule 2: 9 points on same side of centerline",
-        'rule_3': "Rule 3: 6 points steadily increasing/decreasing",
-        'rule_4': "Rule 4: 14 points alternating up and down", 
-        'rule_5': "Rule 5: 2 of 3 points in Zone A or beyond",
-        'rule_6': "Rule 6: 4 of 5 points in Zone B or beyond",
-        'rule_7': "Rule 7: 15 points in Zone C",
-        'rule_8': "Rule 8: 8 points with none in Zone C"
+        'rule_1': "<b>Rule 1</b>: Point beyond 3 sigma",
+        'rule_2': "<b>Rule 2</b>: 9 points on same side of centerline",
+        'rule_3': "<b>Rule 3</b>: 6 points steadily increasing/decreasing",
+        'rule_4': "<b>Rule 4</b>: 14 points alternating up and down", 
+        'rule_5': "<b>Rule 5</b>: 2 of 3 points in Zone A or beyond",
+        'rule_6': "<b>Rule 6</b>: 4 of 5 points in Zone B or beyond",
+        'rule_7': "<b>Rule 7</b>: 15 points in Zone C",
+        'rule_8': "<b>Rule 8</b>: 8 points with none in Zone C"
     }
     
     settings = settings or {}
@@ -72,10 +72,10 @@ def create_control_chart(
         
     # Add Specification Limits if provided
     if lsl_value and usl_value:
-        fig.add_hline(y=lsl_value, line_dash="solid", line_color="#03244f", row=1, col=1)
-        fig.add_annotation(x=0.5, xref="paper", y=lsl_value, yref="y1",
-                           text="LSL", showarrow=False, xanchor="center",
-                           yshift=-10, font=dict(color="#03244f"), align="center", row=1, col=1)
+        fig.add_hline(y=lsl_value, line_dash="solid", line_color="#03244f",
+                      annotation=dict(font_color="#03244f", x=0.5, xref="paper",
+                                      xanchor="center", text="LSL", align="center"),
+                      row=1, col=1)
         fig.add_hline(y=usl_value, line_dash="solid", line_color="#03244f",
                       annotation=dict(font_color="#03244f", x=0.5, xref="paper",
                                       xanchor="center", text="USL", align="center"),
@@ -104,7 +104,7 @@ def create_control_chart(
             num_broken = len(broken)
             indices.append(row['index'])
             values.append(row['value'])
-            hover_texts.append(f"<b>Value: {row['value']:.2f}</b><br>" + "<br>".join(broken))
+            hover_texts.append("<br>".join(broken))
             
             # Make red more intense (darker) as more rules are broken
             intensity = 1 - (num_broken - 1) / max_rules * 0.7
@@ -126,11 +126,10 @@ def create_control_chart(
         row=2, col=1
     )
     
-    # Add mR control lines
-    # fig.add_hline(y=stats['mr_avg'], line_dash="dash", line_color="grey",
-    #               annotation=dict(font_color="grey", text="Mean"), row=2, col=1)
-    # fig.add_hline(y=stats['mr_ucl'], line_dash="dash", line_color="red",
-    #               annotation=dict(font_color="red", text="UCL"), row=2, col=1)
+    fig.add_hline(y=stats['mr_avg'], line_dash="dash", line_color="grey",
+                  annotation=dict(font_color="grey", text=f"{stats["mr_avg"]:.2f}: Mean"), row=2, col=1)
+    fig.add_hline(y=stats['mr_ucl'], line_dash="dash", line_color="red",
+                  annotation=dict(font_color="red", text=f"{stats["mr_ucl"]:.2f}: Upper limit for differences between values"), row=2, col=1)
 
     # --- Titles and Layout ---
     

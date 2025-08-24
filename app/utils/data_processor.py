@@ -23,6 +23,8 @@ def calculate_control_stats(df: pl.DataFrame) -> dict:
     min_value = df['value'].min()
     max_value = df['value'].max()
     count = df['value'].count()
+    mr_avg = df['value'].diff().abs().mean()
+    mr_ucl = mr_avg * 3.267
     
     return {
         'mean': mean,
@@ -36,7 +38,9 @@ def calculate_control_stats(df: pl.DataFrame) -> dict:
         'uwl': mean + 2 * std_dev,  # Upper Warning Limit
         'lwl': mean - 2 * std_dev,  # Lower Warning Limit
         'uzl': mean + std_dev,      # Upper Zone A Limit
-        'lzl': mean - std_dev,      # Lower Zone A Limit
+        'lzl': mean - std_dev,      # Lower Zone A Limit,
+        'mr_avg': mr_avg,
+        'mr_ucl': mr_ucl
     }
 
 def add_control_rules(df: pl.DataFrame, stats: dict, active_rules: dict = None) -> pl.DataFrame:
