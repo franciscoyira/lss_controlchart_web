@@ -164,3 +164,16 @@ def calculate_capability(mu, sigma, USL=None, LSL=None):
     }
     
     return capability
+
+def add_moving_range(df: pl.DataFrame) -> pl.DataFrame:
+    """Add a moving range column to the DataFrame.
+    
+    Args:
+        df: Polars DataFrame with at least a 'value' column.
+    Returns:
+        df: Polars DataFrame with an additional 'moving_range' column.
+    """
+    df = df.with_columns(
+        (pl.col('value').diff().abs()).alias('moving_range')
+    )
+    return df

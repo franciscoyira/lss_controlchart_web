@@ -27,7 +27,7 @@ from dash import Output, Input, State, html, dcc, dash_table, ctx, ALL, MATCH
 # Import your utility functions
 from components.rule_boxes import create_rule_boxes
 from utils.data_loader import parse_csv, load_predefined_dataset
-from utils.data_processor import calculate_capability, calculate_control_stats, add_control_rules
+from utils.data_processor import calculate_capability, calculate_control_stats, add_control_rules, add_moving_range
 from utils.slider_defaults import get_slider_defaults
 from utils.chart_creator import create_control_chart, make_stats_panel
 from components.settings_toolbar import create_settings_toolbar
@@ -164,7 +164,8 @@ def register_data_processing_callbacks(app):
         usl_value = settings.get('usl', defaults['usl'])
         capability = calculate_capability(stats['mean'], stats['std_dev'], usl_value, lsl_value)
         df_with_rules = add_control_rules(df, stats, active_rules)
-        fig = create_control_chart(df_with_rules, stats, capability or {}, active_rules, settings, usl_value, lsl_value)
+        df_with_mr = add_moving_range(df_with_rules)
+        fig = create_control_chart(df_with_mr, stats, capability or {}, active_rules, settings, usl_value, lsl_value)
 
         # 5. Update the 'outputs' dictionary with the new components
         outputs['stats_panel'] = make_stats_panel(stats, capability)

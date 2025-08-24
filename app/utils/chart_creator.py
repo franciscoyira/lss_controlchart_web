@@ -43,174 +43,115 @@ def create_control_chart(
         active_rules = {i: True for i in range(1, 9)}
         
     # Create base plot with subplots
-    fig = make_subplots(rows=1, cols=1)
+    fig = make_subplots(
+        rows=2, cols=1, 
+        shared_xaxes=True, 
+        row_heights=[0.7, 0.3],
+        vertical_spacing=0.05
+    )
     
-    # Add main data trace to the first subplot
+    # --- X-Chart (Top Subplot) ---
+    
+    # Add main data trace
     fig.add_trace(
         go.Scatter(x=df['index'], y=df['value'], mode='lines+markers', name='Value'),
         row=1, col=1
     )
     
-    # Define control line specs: (stat_key, color, annotation text)
+    # Define and add control lines
     control_line_specs = [
-        ("mean", "grey",   "Mean"),
-        ("uwl",  "orange", "2σ"),
-        ("lwl",  "orange", None),
-        ("uzl",  "green",  "1σ"),
-        ("lzl",  "green",  None),
-        ("ucl",  "red",    "3σ (Upper Control Limit)"),
+        ("mean", "grey",   "Mean"), ("uwl",  "orange", "2σ"),
+        ("lwl",  "orange", None),   ("uzl",  "green",  "1σ"),
+        ("lzl",  "green",  None),   ("ucl",  "red",    "3σ"),
         ("lcl",  "red",    None),
     ]
-
     for key, color, text in control_line_specs:
-        fig.add_hline(
-            y=stats[key],
-            line_dash="dash",
-            line_color=color,
-            annotation=dict(font_color=color, text=text) if text else None,
-            row=1, col=1
-        )
+        fig.add_hline(y=stats[key], line_dash="dash", line_color=color,
+                      annotation=dict(font_color=color, text=text) if text else None,
+                      row=1, col=1)
         
+    # Add Specification Limits if provided
     if lsl_value and usl_value:
-        fig.add_hline(
-            y=lsl_value,
-            line_dash="solid",
-            line_color="#03244f",
-            row=1, col=1
-        )
+        fig.add_hline(y=lsl_value, line_dash="solid", line_color="#03244f", row=1, col=1)
+        fig.add_annotation(x=0.5, xref="paper", y=lsl_value, yref="y1",
+                           text="LSL", showarrow=False, xanchor="center",
+                           yshift=-10, font=dict(color="#03244f"), align="center", row=1, col=1)
+        fig.add_hline(y=usl_value, line_dash="solid", line_color="#03244f",
+                      annotation=dict(font_color="#03244f", x=0.5, xref="paper",
+                                      xanchor="center", text="USL", align="center"),
+                      row=1, col=1)
+    
+    # Add Zone annotations
+    zone_specs = [
+        ("C", (stats['mean'] + stats['uzl'])/2, "green"),
+        ("B", (stats['uwl'] + stats['uzl'])/2, "orange"),
+        ("A", (stats['ucl'] + stats['uwl'])/2, "red"),
+    ]
+    for name, y_val, color in zone_specs:
+        fig.add_annotation(x=df['index'].min() - 2, y=y_val, text=f"Zone {name}",
+                           showarrow=False, xref="x1", yref="y1",
+                           font=dict(size=12, color=color), bgcolor="rgba(255, 255, 255, 0.8)",
+                           bordercolor=color, borderwidth=1, borderpad=2)
 
-        fig.add_annotation(
-            x=0.5, xref="paper",     # middle of plot width
-            y=lsl_value, yref="y1",   # lock to LSL line on y-axis 1
-            text="Lower Specification Limit",
-            showarrow=False,
-            xanchor="center",
-            yshift=-10,              # 15px below the line, independent of units
-            font=dict(color="#03244f"),
-            align="center",
-            row=1, col=1
-        )
+    # Highlight points with rule violations
+    indices, values, hover_texts, marker_colors = [], [], [], []
+    rule_cols = [f'rule_{i}' for i in range(1, 9) if active_rules.get(i, True)]
+    max_rules = len(rule_cols) if rule_cols else 1
 
-        fig.add_hline(
-            y=usl_value,
-            line_dash="solid",
-            line_color="#03244f",
-            annotation=dict(
-                font_color="#03244f",
-                x=0.5,
-                xref="paper",
-                xanchor="center",    
-                text="Upper Specification Limit",
-                align="center"
-            ),
-            row=1, col=1
-        )
-    
-    # Add zone annotations to the left side for top areas
-    fig.add_annotation(
-        x=df['index'].min() - 2,
-        y=(stats['mean'] + stats['uzl'])/2,
-        text="Zone C",
-        showarrow=False,
-        xref="x1",
-        yref="y1",
-        font=dict(size=12, color="green"),  # Match 1σ line color
-        bgcolor="rgba(255, 255, 255, 0.8)",
-        bordercolor="green",
-        borderwidth=1,
-        borderpad=2
-    )
-    
-    fig.add_annotation(
-        x=df['index'].min() - 2,
-        y=(stats['uwl'] + stats['uzl'])/2,
-        text="Zone B",
-        showarrow=False,
-        xref="x1",
-        yref="y1",
-        font=dict(size=12, color="orange"),  # Match 2σ line color
-        bgcolor="rgba(255, 255, 255, 0.8)",
-        bordercolor="orange",
-        borderwidth=1,
-        borderpad=2
-    )
-    
-    fig.add_annotation(
-        x=df['index'].min() - 2,
-        y=(stats['ucl'] + stats['uwl'])/2,
-        text="Zone A",
-        showarrow=False,
-        xref="x1",
-        yref="y1",
-        font=dict(size=12, color="red"),  # Match 3σ line color
-        bgcolor="rgba(255, 255, 255, 0.8)",
-        bordercolor="red",
-        borderwidth=1,
-        borderpad=2
-    )
-    
-    # Create arrays for scatter plot with highlighted points
-    indices = []
-    values = []
-    hover_texts = []
-    colors = []
-    
-    # Identify broken rules for each point
-    rule_columns = [f'rule_{i}' for i in range(1, 9) if active_rules.get(i, True)]
-    
     for row in df.iter_rows(named=True):
-        broken_rules = []
-        
-        for rule in rule_columns:
-            if row[rule] == "Broken":
-                rule_num = rule.split('_')[1]
-                broken_rules.append(f"{rule_descriptions[rule]}")
-        
-        if broken_rules:
+        broken = [rule_descriptions[r] for r in rule_cols if row[r] == "Broken"]
+        if broken:
+            num_broken = len(broken)
             indices.append(row['index'])
             values.append(row['value'])
-            # Add value to hover text with the value formatted to 2 decimal places
-            value_text = f"<b>Value: {row['value']:.2f}</b>"
-            hover_texts.append(value_text + "<br>" + "<br>".join(broken_rules))
-            colors.append("red")  # All points with violations are red
-    
-    # Add highlighted points for rule violations
+            hover_texts.append(f"<b>Value: {row['value']:.2f}</b><br>" + "<br>".join(broken))
+            
+            # Make red more intense (darker) as more rules are broken
+            intensity = 1 - (num_broken - 1) / max_rules * 0.7
+            red_val = int(255 * intensity)
+            marker_colors.append(f'rgb({red_val}, 0, 0)')
+
     if indices:
-        fig.add_trace(
-            go.Scatter(
-                x=indices,
-                y=values,
-                mode='markers',
-                marker=dict(
-                    color=colors,
-                    size=10,
-                    line=dict(
-                        color='black',
-                        width=1
-                    )
-                ),
-                text=hover_texts,
-                hoverinfo='text',
-                name='Rule Violations'
-            ),
-            row=1, col=1
-        )
+        fig.add_trace(go.Scatter(
+            x=indices, y=values, mode='markers',
+            marker=dict(color=marker_colors, size=10, line=dict(color='black', width=1)),
+            text=hover_texts, hoverinfo='text', name='Rule Violations'
+        ), row=1, col=1)
+
+    # --- mR-Chart (Bottom Subplot) ---
     
-    fig.add_annotation(
-        text="<i>X-chart: Time-series for individual values</i>",
-        xref="paper", yref="paper",
-        x=1, y=1.06,
-        xanchor="right", yanchor="top",
-        showarrow=False,
-        font=dict(size=14)
+    # Add moving range trace
+    fig.add_trace(
+        go.Scatter(x=df['index'], y=df['moving_range'], mode='lines+markers', name='Moving Range'),
+        row=2, col=1
     )
     
+    # Add mR control lines
+    # fig.add_hline(y=stats['mr_avg'], line_dash="dash", line_color="grey",
+    #               annotation=dict(font_color="grey", text="Mean"), row=2, col=1)
+    # fig.add_hline(y=stats['mr_ucl'], line_dash="dash", line_color="red",
+    #               annotation=dict(font_color="red", text="UCL"), row=2, col=1)
+
+    # --- Titles and Layout ---
+    
+    # Add subplot titles
+    fig.add_annotation(text="<i>X-Chart: Individual Values</i>",
+                       xref="paper", yref="paper", x=1, y=1.0,
+                       xanchor="right", yanchor="bottom", showarrow=False, font=dict(size=14))
+    fig.add_annotation(text="<i>mR-Chart: Moving Range</i>",
+                       xref="paper", yref="paper", x=1, y=0.28,
+                       xanchor="right", yanchor="bottom", showarrow=False, font=dict(size=14))
+
+    # Update overall layout
     fig.update_layout(
-        xaxis_title=settings.get('period_type', 'Observation'),
-        yaxis_title=settings.get('y_axis_label', 'Value'),
         showlegend=False,
-        hovermode='closest',
-        height=500)
+        hovermode='x unified',
+        height=700,
+        xaxis_title=None,
+        xaxis2_title=settings.get('period_type', 'Observation'),
+        yaxis_title=settings.get('y_axis_label', 'Individual Values'),
+        yaxis2_title="Moving Range"
+    )
         
     return fig
 
