@@ -3,6 +3,7 @@ import polars as pl
 from plotly.graph_objects import Figure
 import plotly.graph_objects as go
 from dash import html
+from plotly.subplots import make_subplots
 
 def create_control_chart(
     df: pl.DataFrame,
@@ -20,6 +21,8 @@ def create_control_chart(
         active_rules: Dictionary with active rules {1: True/False, 2: True/False, ...}
                       If None, all rules are active
         settings: Dictionary with chart settings (period_type, y_axis_label, etc.)
+        usl_value: Upper Specification Limit value (optional, user-configured)
+        lsl_value: Lower Specification Limit value (optional, user-configured)
     """
     # Define rule descriptions for tooltips
     rule_descriptions = {
@@ -39,8 +42,14 @@ def create_control_chart(
     if active_rules is None:
         active_rules = {i: True for i in range(1, 9)}
         
-    # Create base plot
-    fig = px.line(df, x='index', y='value')
+    # Create base plot with subplots
+    fig = make_subplots(rows=1, cols=1)
+    
+    # Add main data trace to the first subplot
+    fig.add_trace(
+        go.Scatter(x=df['index'], y=df['value'], mode='lines+markers', name='Value'),
+        row=1, col=1
+    )
     
     # Define control line specs: (stat_key, color, annotation text)
     control_line_specs = [
@@ -58,7 +67,8 @@ def create_control_chart(
             y=stats[key],
             line_dash="dash",
             line_color=color,
-            annotation=dict(font_color=color, text=text) if text else None
+            annotation=dict(font_color=color, text=text) if text else None,
+            row=1, col=1
         )
         
     if lsl_value and usl_value:
@@ -66,17 +76,19 @@ def create_control_chart(
             y=lsl_value,
             line_dash="solid",
             line_color="#03244f",
+            row=1, col=1
         )
 
         fig.add_annotation(
             x=0.5, xref="paper",     # middle of plot width
-            y=lsl_value, yref="y",   # lock to LSL line
+            y=lsl_value, yref="y1",   # lock to LSL line on y-axis 1
             text="Lower Specification Limit",
             showarrow=False,
             xanchor="center",
             yshift=-10,              # 15px below the line, independent of units
             font=dict(color="#03244f"),
-            align="center"
+            align="center",
+            row=1, col=1
         )
 
         fig.add_hline(
@@ -84,12 +96,14 @@ def create_control_chart(
             line_dash="solid",
             line_color="#03244f",
             annotation=dict(
-            font_color="#03244f",
-            x=0.5,
-            xref="paper",
-            xanchor="center",    
-            text="Upper Specification Limit",
-            align="center" )
+                font_color="#03244f",
+                x=0.5,
+                xref="paper",
+                xanchor="center",    
+                text="Upper Specification Limit",
+                align="center"
+            ),
+            row=1, col=1
         )
     
     # Add zone annotations to the left side for top areas
@@ -98,8 +112,8 @@ def create_control_chart(
         y=(stats['mean'] + stats['uzl'])/2,
         text="Zone C",
         showarrow=False,
-        xref="x",
-        yref="y",
+        xref="x1",
+        yref="y1",
         font=dict(size=12, color="green"),  # Match 1σ line color
         bgcolor="rgba(255, 255, 255, 0.8)",
         bordercolor="green",
@@ -112,8 +126,8 @@ def create_control_chart(
         y=(stats['uwl'] + stats['uzl'])/2,
         text="Zone B",
         showarrow=False,
-        xref="x",
-        yref="y",
+        xref="x1",
+        yref="y1",
         font=dict(size=12, color="orange"),  # Match 2σ line color
         bgcolor="rgba(255, 255, 255, 0.8)",
         bordercolor="orange",
@@ -126,8 +140,8 @@ def create_control_chart(
         y=(stats['ucl'] + stats['uwl'])/2,
         text="Zone A",
         showarrow=False,
-        xref="x",
-        yref="y",
+        xref="x1",
+        yref="y1",
         font=dict(size=12, color="red"),  # Match 3σ line color
         bgcolor="rgba(255, 255, 255, 0.8)",
         bordercolor="red",
@@ -178,7 +192,8 @@ def create_control_chart(
                 text=hover_texts,
                 hoverinfo='text',
                 name='Rule Violations'
-            )
+            ),
+            row=1, col=1
         )
     
     fig.add_annotation(
