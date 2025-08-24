@@ -26,6 +26,23 @@
     margin: 0 auto;
 }
 
+/* Home icon button styles */
+.home-icon-button {
+    transition: transform 0.2s ease-in-out, filter 0.2s ease-in-out;
+    cursor: pointer;
+    border-radius: 50%; /* Ensures shadow is contained if any */
+}
+
+.home-icon-button:hover {
+    transform: scale(1.1);
+    filter: drop-shadow(0 0 5px rgba(255, 255, 255, 0.7));
+}
+
+.home-icon-button:active {
+    transform: scale(0.9);
+    transition: transform 0.1s ease-in-out;
+}
+
 /* Option cards container */
 .dataset-selector-container {
     display: flex;
@@ -691,4 +708,81 @@
 .stat-value {
     font-family: "JetBrains Mono", "Fira Mono", monospace;
     color: #253354;
+}
+
+/* Waffle Menu Button */
+.waffle-menu-button {
+    background: none;
+    border: none;
+    cursor: pointer;
+    padding: 0;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-right: 16px;
+    transition: transform 0.2s ease-in-out, filter 0.2s ease-in-out;
+}
+
+.waffle-menu-button:hover {
+    transform: scale(1.1);
+    filter: drop-shadow(0 0 5px rgba(255, 255, 255, 0.7));
+}
+
+.waffle-menu-button:active {
+    transform: scale(0.9);
+}
+
+/* Waffle Menu Styles */
+.waffle-menu {
+    position: absolute;
+    top: 75px; /* Adjust based on header height */
+    left: 20px; /* Adjust for alignment */
+    background-color: #f0f3f6;
+    border: 1px solid #c8d4e3;
+    border-radius: 0 0 6px 6px;
+    box-shadow: 0 8px 16px rgba(0,0,0,0.15);
+    z-index: 1000;
+    width: 250px;
+    padding: 8px 0;
+    transition: opacity 0.2s ease-in-out, transform 0.2s ease-in-out;
+    transform-origin: top left;
+}
+
+.waffle-menu.hidden {
+    opacity: 0;
+    transform: scale(0.95);
+    pointer-events: none;
+}
+
+.waffle-menu-item {
+    display: flex;
+    align-items: center;
+    padding: 10px 16px;
+    cursor: pointer;
+    color: #334155;
+    font-family: "Inter", "Segoe UI", system-ui, sans-serif;
+    font-size: 0.9rem;
+    text-decoration: none;
+    gap: 12px;
+}
+
+.waffle-menu-item:hover {
+    background-color: #e1e8f0;
+}
+
+.waffle-menu-item-icon {
+    width: 20px;
+    height: 20px;
+    flex-shrink: 0;
+}
+
+.waffle-menu-item-text {
+    flex-grow: 1;
+}
+
+.waffle-menu-divider {
+    border: 0;
+    border-top: 1px solid #d1d9e4;
+    margin: 8px 0;
 }

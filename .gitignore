@@ -5,3 +5,4 @@ todo.md
 __pycache__/
 *.py[cod]
 *$py.class
+plan_before_after.md

@@ -32,6 +32,7 @@ from utils.slider_defaults import get_slider_defaults
 from utils.chart_creator import create_control_chart, make_stats_panel
 from components.settings_toolbar import create_settings_toolbar
 from callbacks.rule_checkbox import get_active_rules
+from components.layout import SAMPLE_DATASETS # Import the dataset config
 
 
 def register_data_processing_callbacks(app):
@@ -79,24 +80,24 @@ def register_data_processing_callbacks(app):
         Output('download-container', 'style'),
         Output('rule-boxes-container', 'children'),
         Output('upload-card', 'className'),
-        Output('btn-in-control', 'className'),
-        Output('btn-out-of-control', 'className'),
+        Output({'type': 'sample-data-btn', 'index': ALL}, 'className'),
         Output('settings-toolbar-container', 'children'),
         Output('settings-toolbar-container', 'style'),
         Output('dataset-selector', 'style')],
         [Input('upload-data', 'contents'),
-        Input('btn-in-control', 'n_clicks'),
-        Input('btn-out-of-control', 'n_clicks'),
-        Input('app-state-store', 'data')],
+         Input({'type': 'sample-data-btn', 'index': ALL}, 'n_clicks'),
+         Input({'type': 'sample-data-menu-btn', 'index': ALL}, 'n_clicks'),
+         Input('app-state-store', 'data')],
         [State('upload-data', 'filename'),
-        State('stored-data', 'data')]
+         State('stored-data', 'data')]
     )
-    def update_output(contents, in_control_clicks, out_control_clicks, app_state, filename, stored_data):
+    def update_output(contents, sample_clicks, menu_clicks, app_state, filename, stored_data):
         """Update the output based on user interactions"""
         print("app_state in update_output:", app_state)
         active_rules = get_active_rules(app_state)
 
-        # 1. Initialize all 14 output variables with their default values
+        # 1. Initialize all output variables with their default values
+        num_sample_btns = len(SAMPLE_DATASETS)
         outputs = {
             'stats_panel': html.Div(style={'display': 'none'}),
             'plot_component': html.Div(style={'display': 'none'}),
@@ -107,8 +108,7 @@ def register_data_processing_callbacks(app):
             'download_container_style': {'display': 'none'},
             'rule_boxes': create_rule_boxes(),
             'upload_class': 'option-card upload-card',
-            'in_control_class': 'option-card',
-            'out_control_class': 'option-card',
+            'sample_btn_classes': ['option-card'] * num_sample_btns,
             'settings_toolbar': None,
             'settings_toolbar_style': {'display': 'none'},
             'dataset_selector_style': {'display': 'flex'}
@@ -120,26 +120,32 @@ def register_data_processing_callbacks(app):
         trigger_id = ctx.triggered[0]['prop_id'].split('.')[0]
         df = None
         dataset_name = None
+        
+        # Helper to find dataset config by id
+        def find_dataset_by_id(dataset_id):
+            return next((ds for ds in SAMPLE_DATASETS if ds['id'] == dataset_id), None)
 
         # 2. Determine which dataset to load based on the trigger
         if trigger_id == 'upload-data' and contents:
             outputs['upload_class'] += ' active'
             df = parse_csv(contents)
             dataset_name = filename
-        elif trigger_id == 'btn-in-control' and in_control_clicks:
-            outputs['in_control_class'] += ' active'
-            df = load_predefined_dataset('in_control.csv')
-            dataset_name = 'in_control.csv'
-        elif trigger_id == 'btn-out-of-control' and out_control_clicks:
-            outputs['out_control_class'] += ' active'
-            df = load_predefined_dataset('out_of_control.csv')
-            dataset_name = 'out_of_control.csv'
+        elif 'sample-data-btn' in trigger_id or 'sample-data-menu-btn' in trigger_id:
+            clicked_index_str = ctx.triggered_id['index']
+            dataset_config = find_dataset_by_id(clicked_index_str)
+            if dataset_config:
+                df = load_predefined_dataset(dataset_config['filename'])
+                dataset_name = dataset_config['filename']
+                # Update class for the clicked button
+                btn_idx_in_layout = [i for i, ds in enumerate(SAMPLE_DATASETS) if ds['id'] == clicked_index_str][0]
+                outputs['sample_btn_classes'][btn_idx_in_layout] = 'option-card active'
         elif trigger_id == 'app-state-store' and stored_data and 'dataset_name' in stored_data:
             dataset_name = stored_data['dataset_name']
-            if dataset_name.startswith('in_control'):
-                df = load_predefined_dataset('in_control.csv')
-            elif dataset_name.startswith('out_of_control'):
-                df = load_predefined_dataset('out_of_control.csv')
+            
+            # Find which predefined dataset it corresponds to, if any
+            dataset_config = next((ds for ds in SAMPLE_DATASETS if ds['filename'] == dataset_name), None)
+            if dataset_config:
+                df = load_predefined_dataset(dataset_config['filename'])
             else:
                 # Handle custom data case: ask user to re-upload
                 outputs['plot_component'] = html.Div([

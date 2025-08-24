@@ -1,36 +1,93 @@
 from dash import html, dcc
 from components.rule_boxes import create_rule_boxes
 
+# Define sample datasets in a data structure for easy extension
+SAMPLE_DATASETS = [
+    {
+        'id': 'in-control',
+        'title': 'Try in-control data',
+        'description': 'Use a sample dataset representing a stable, predictable process.',
+        'icon': '/assets/chart_icon.svg',
+        'filename': 'in_control.csv'
+    },
+    {
+        'id': 'out-of-control',
+        'title': 'Try out-of-control data',
+        'description': 'Use a sample dataset with special cause variations already present.',
+        'icon': '/assets/warning_icon.svg',
+        'filename': 'out_of_control.csv'
+    }
+]
+
 def create_layout():
     """Create the main app layout"""
+    
+    # Generate sample dataset cards for the main page
+    sample_dataset_cards = [
+        html.Div([
+            html.Div([
+                html.Img(src=dataset['icon'], className='card-icon'),
+                html.Div(dataset['title'])
+            ], className='card-content'),
+            html.P(dataset['description'], className='option-card-description')
+        ], id={'type': 'sample-data-btn', 'index': dataset['id']}, className='option-card')
+        for dataset in SAMPLE_DATASETS
+    ]
+
+    # Generate sample dataset items for the waffle menu
+    sample_dataset_menu_items = [
+        html.Div([
+            html.Img(src=dataset['icon'], className='waffle-menu-item-icon'),
+            html.Span(dataset['title'], className='waffle-menu-item-text')
+        ], id={'type': 'sample-data-menu-btn', 'index': dataset['id']}, className='waffle-menu-item')
+        for dataset in SAMPLE_DATASETS
+    ]
+    
     return html.Div([
         html.Div([
-    html.A(
-        html.Img(
-            src="/assets/home_icon.svg",  # Use a home icon, or just text: "Home"
-            alt="Home",
-            title= "Home",
-            style={
-                "height": "44px",
-                "verticalAlign": "middle",
-                "marginRight": "16px"            }
-        ),
-        href="/",   # Root/home
-        style={
-            "display": "flex",
-            "alignItems": "center",
-            "textDecoration": "none"
-        }
-    ),
-    html.H1(
-        'Process Behaviour Chart Tool - Lean Six Sigma',
-        className='app-header-title'
-    ),
-], className="app-header"),
+            # This button will toggle the menu
+            html.Button(
+                html.Img(
+                    src="/assets/home_icon.svg",
+                    alt="Menu",
+                    title="Menu",
+                    style={"height": "44px", "verticalAlign": "middle"}
+                ),
+                id="waffle-menu-button",
+                className="waffle-menu-button"
+            ),
+            html.H1(
+                'Process Behaviour Chart Tool - Lean Six Sigma',
+                className='app-header-title'
+            ),
+        ], className="app-header"),
+        
+        # The menu itself, hidden by default
+        html.Div(id='waffle-menu', className='waffle-menu hidden', children=[
+            html.A([
+                html.Img(src="/assets/home_icon.svg", className='waffle-menu-item-icon'),
+                html.Span("Home", className='waffle-menu-item-text')
+            ], href="/", className='waffle-menu-item'),
+            
+            html.Hr(className='waffle-menu-divider'),
+            
+            # Upload Option as a menu item
+            dcc.Upload(
+                id='upload-data-menu',
+                children=html.Div([
+                    html.Img(src='/assets/upload_icon.svg', className='waffle-menu-item-icon'),
+                    html.Span("Upload your own CSV", className='waffle-menu-item-text')
+                ], className='waffle-menu-item'),
+                style={'display': 'block'} # Make the upload component a block element
+            ),
+            
+            # Dynamically generated sample data items
+            *sample_dataset_menu_items
+        ]),
         
         # Card-style layout for data selection options
         html.Div([
-            # Upload CSV Card
+            # Upload CSV Card (remains a special case)
             html.Div([
                 dcc.Upload(
                     id='upload-data',
@@ -43,23 +100,9 @@ def create_layout():
                 html.P("Upload a .csv file with a single column of numerical data.", className='option-card-description')
             ], id='upload-card', className='option-card upload-card'),
             
-            # In-control Data Card
-            html.Div([
-                html.Div([
-                    html.Img(src='/assets/chart_icon.svg', className='card-icon'),
-                    html.Div("Try in-control data")
-                ], className='card-content'),
-                html.P("Use a sample dataset representing a stable, predictable process.", className='option-card-description')
-            ], id='btn-in-control', className='option-card'),
+            # Dynamically generated sample data cards
+            *sample_dataset_cards
             
-            # Out-of-control Data Card
-            html.Div([
-                html.Div([
-                    html.Img(src='/assets/warning_icon.svg', className='card-icon'),
-                    html.Div("Try out-of-control data")
-                ], className='card-content'),
-                html.P("Use a sample dataset with special cause variations already present.", className='option-card-description')
-            ], id='btn-out-of-control', className='option-card'),
         ], id='dataset-selector', className='dataset-selector-container'),
 
         # Empty state container - shows only when no data is loaded
