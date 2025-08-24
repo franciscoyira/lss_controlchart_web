@@ -67,8 +67,14 @@ def create_control_chart(
     ]
     for key, color, text in control_line_specs:
         fig.add_hline(y=stats[key], line_dash="dash", line_color=color,
-                      annotation=dict(font_color=color, text=text) if text else None,
-                      row=1, col=1)
+                  annotation=dict(
+                  font=dict(color=color, size=9.5),
+                  text=f"{text}: {round(stats[key],2)}",
+                  xanchor="left",
+                  xref="paper",
+                  x=0.01
+                  ) if text else None,
+                  row=1, col=1)
         
     # Add Specification Limits if provided
     if lsl_value and usl_value:
@@ -83,15 +89,15 @@ def create_control_chart(
     
     # Add Zone annotations
     zone_specs = [
-        ("C", (stats['mean'] + stats['uzl'])/2, "green"),
-        ("B", (stats['uwl'] + stats['uzl'])/2, "orange"),
-        ("A", (stats['ucl'] + stats['uwl'])/2, "red"),
+        ("C", '1', stats['uzl'], "green"),
+        ("B", '2', stats['uwl'], "orange"),
+        ("A", '3', stats['ucl'], "red"),
     ]
-    for name, y_val, color in zone_specs:
-        fig.add_annotation(x=df['index'].min() - 2, y=y_val, text=f"Zone {name}",
-                           showarrow=False, xref="x1", yref="y1",
-                           font=dict(size=12, color=color), bgcolor="rgba(255, 255, 255, 0.8)",
-                           bordercolor=color, borderwidth=1, borderpad=2)
+    for name, sd, y_val, color in zone_specs:
+        fig.add_annotation(x=df['index'].min() - 2, y=y_val, text=f"Zone {name}: up to {sd} σ",
+                           showarrow=False, xref="x1", yref="y1", yshift=-13,
+                           font=dict(size=11, color=color), bgcolor="rgba(255, 255, 255, 0.88)",
+                           bordercolor=color, borderwidth=0.5, borderpad=1)
 
     # Highlight points with rule violations
     indices, values, hover_texts, marker_colors = [], [], [], []
