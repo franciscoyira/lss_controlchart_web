@@ -40,6 +40,7 @@ def create_layout():
                     ], className='card-content'),
                     className='upload-component'
                 ),
+                html.P("Upload a .csv file with a single column of numerical data.", className='option-card-description')
             ], id='upload-card', className='option-card upload-card'),
             
             # In-control Data Card
@@ -47,7 +48,8 @@ def create_layout():
                 html.Div([
                     html.Img(src='/assets/chart_icon.svg', className='card-icon'),
                     html.Div("Try in-control data")
-                ], className='card-content')
+                ], className='card-content'),
+                html.P("Use a sample dataset representing a stable, predictable process.", className='option-card-description')
             ], id='btn-in-control', className='option-card'),
             
             # Out-of-control Data Card
@@ -55,7 +57,8 @@ def create_layout():
                 html.Div([
                     html.Img(src='/assets/warning_icon.svg', className='card-icon'),
                     html.Div("Try out-of-control data")
-                ], className='card-content')
+                ], className='card-content'),
+                html.P("Use a sample dataset with special cause variations already present.", className='option-card-description')
             ], id='btn-out-of-control', className='option-card'),
         ], id='dataset-selector', className='dataset-selector-container'),
 

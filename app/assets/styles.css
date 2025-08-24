@@ -42,7 +42,7 @@
     text-align: center;
     box-shadow: 0 2px 4px rgba(0,0,0,0.1);
     flex: 1;
-    height: 40px;
+    height: 50px;
     display: flex;
     align-items: center;
     justify-content: center;
@@ -83,6 +83,36 @@
 .card-icon {
     height: 24px;
     margin: 0;
+}
+
+.option-card-description {
+    font-family: "Inter", "Segoe UI", system-ui, sans-serif;
+    font-size: 0.85rem;
+    color: #334155;
+    line-height: 1.4;
+    margin: 0;
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(248, 249, 250, 0.98);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    opacity: 0;
+    transition: opacity 0.3s ease;
+    padding: 8px;
+    pointer-events: none;
+}
+
+.option-card:hover .option-card-description {
+    opacity: 1;
+}
+
+.upload-card:hover .card-content {
+    opacity: 0;
 }
 
 /* Upload component styles */
