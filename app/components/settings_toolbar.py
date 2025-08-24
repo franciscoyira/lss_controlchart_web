@@ -43,25 +43,6 @@ def create_settings_toolbar(range_data = None):
                 persistence_type='memory')
         ], className="toolbar-item"),
         
-        # Periods naming dropdown
-        html.Div([
-            html.Label("Period Type:", className="toolbar-label"),
-            dcc.Dropdown(
-                id="dropdown-period-type",
-                options=[
-                    {"label": "Days", "value": "days"},
-                    {"label": "Weeks", "value": "weeks"},
-                    {"label": "Months", "value": "months"}
-                ],
-                value="days",
-                clearable=False,
-                className="toolbar-dropdown",
-                searchable=False,
-                persistence=True,
-                persistence_type='memory'
-            )
-        ], className="toolbar-item"),
-        
         # Process change point
         html.Div([
             html.Label("Process Change at:", className="toolbar-label"),
@@ -78,6 +59,27 @@ def create_settings_toolbar(range_data = None):
             )
         ], className="toolbar-item"),
         
+        # Periods naming dropdown
+        html.Div([
+            html.Label("X-axis Label:", className="toolbar-label"),
+            dcc.Dropdown(
+            id="dropdown-period-type",
+            options=[
+                {"label": "Hours", "value": "Hours"},
+                {"label": "Days", "value": "Days"},
+                {"label": "Weeks", "value": "Weeks"},
+                {"label": "Months", "value": "Months"},
+                {"label": "Observations", "value": "Observations"}
+            ],
+            value="Days",
+            clearable=False,
+            className="toolbar-dropdown",
+            searchable=True,
+            persistence=True,
+            persistence_type='memory'
+            )
+        ], className="toolbar-item"),
+        
         # Y-axis label
         html.Div([
             html.Label("Y-axis Label:", className="toolbar-label"),
@@ -90,6 +92,6 @@ def create_settings_toolbar(range_data = None):
                 persistence=True,
                 persistence_type='memory'
             )
-        ], className="toolbar-item"),
+        ], className="toolbar-item", style={'display': 'none'}),
         
     ], id="settings-toolbar", className="settings-toolbar")
