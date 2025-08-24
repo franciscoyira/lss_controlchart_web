@@ -330,6 +330,8 @@
     gap: 10px;
     transition: all 0.3s ease;
     overflow: hidden;
+    position: relative;
+    min-height: 62px;
 }
 
 .rule-box:hover {
@@ -369,16 +371,22 @@
     color: #495057;
     line-height: 1.3;
     margin: 0;
-    max-height: 0;
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(255, 255, 255, 0.95);
+    display: flex;
+    align-items: center;
     opacity: 0;
-    overflow: hidden;
-    transition: all 0.3s ease;
+    transition: opacity 0.3s ease;
+    padding: 12px;
+    pointer-events: none;
 }
 
 .rule-box:hover .rule-description {
-    max-height: 100px;
     opacity: 1;
-    margin-top: 6px;
 }
 
 /* Responsive adjustments */
@@ -389,6 +397,7 @@
     
     .rule-box {
         padding: 15px;
+        min-height: 80px; /* Adjust for mobile */
     }
     
     .rule-icon {
@@ -402,6 +411,7 @@
     
     .rule-description {
         font-size: 0.9rem;
+        padding: 20px 15px 10px 15px; /* Adjust for mobile */
     }
 }
 
