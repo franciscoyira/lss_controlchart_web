@@ -315,8 +315,8 @@
 .rule-boxes-grid {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-    gap: 16px;
-    margin-top: 15px;
+    gap: 12px;
+    margin-top: 12px;
 }
 
 .rule-box {
@@ -332,10 +332,11 @@
     overflow: hidden;
     position: relative;
     min-height: 62px;
+    cursor: pointer;
 }
 
 .rule-box:hover {
-    transform: translateY(-2px) scale(1.03);
+    transform: translateY(-1px) scale(1.03);
     box-shadow: 0 8px 16px rgba(0,0,0,0.12);
 }
 
@@ -381,12 +382,20 @@
     align-items: center;
     opacity: 0;
     transition: opacity 0.3s ease;
-    padding: 12px;
+    padding: 10px;
     pointer-events: none;
 }
 
 .rule-box:hover .rule-description {
     opacity: 1;
+}
+
+/* Position the checkbox consistently */
+.rule-checkbox-container {
+    position: absolute;
+    right: 10px;
+    top: 10px;
+    z-index: 10;
 }
 
 /* Responsive adjustments */
