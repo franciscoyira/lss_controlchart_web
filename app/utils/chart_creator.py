@@ -12,17 +12,20 @@ def create_control_chart(
     active_rules: dict = None,
     settings=None,
     usl_value=None,
-    lsl_value=None) -> Figure:
+    lsl_value=None,
+    process_change_point=None) -> Figure:
     """Create a control chart plot with all control stats
     
     Args:
         df: DataFrame with data
         stats: Dictionary with data-driven statistics
+        capability_stats: Dictionary with capability statistics (Cp, Cpk)
         active_rules: Dictionary with active rules {1: True/False, 2: True/False, ...}
                       If None, all rules are active
         settings: Dictionary with chart settings (period_type, y_axis_label, etc.)
         usl_value: Upper Specification Limit value (optional, user-configured)
         lsl_value: Lower Specification Limit value (optional, user-configured)
+        process_change_point: X-axis index for a vertical line indicating a process change.
     """
     # Define rule descriptions for tooltips
     rule_descriptions = {
@@ -87,6 +90,14 @@ def create_control_chart(
                                       xanchor="center", text="USL", align="center"),
                       row=1, col=1)
     
+    # Add process change line if provided
+    if process_change_point is not None:
+        fig.add_vline(x=process_change_point, line_width=3, line_dash="dash", 
+                      line_color="purple", annotation_text="Process Change", 
+                      annotation_position="top", row=1, col=1)
+        fig.add_vline(x=process_change_point, line_width=3, line_dash="dash", 
+                      line_color="purple", row=2, col=1)
+
     # Add Zone annotations
     zone_specs = [
         ("C", '1', stats['uzl'], "green"),

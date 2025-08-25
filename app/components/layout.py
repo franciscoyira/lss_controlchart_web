@@ -6,16 +6,23 @@ SAMPLE_DATASETS = [
     {
         'id': 'in-control',
         'title': 'Try in-control data',
-        'description': 'Use a sample dataset representing a stable, predictable process.',
+        'description': 'Sample dataset representing a stable, predictable process.',
         'icon': '/assets/chart_icon.svg',
         'filename': 'in_control.csv'
     },
     {
         'id': 'out-of-control',
         'title': 'Try out-of-control data',
-        'description': 'Use a sample dataset with special cause variations already present.',
+        'description': 'Sample dataset with special cause variations already present.',
         'icon': '/assets/warning_icon.svg',
         'filename': 'out_of_control.csv'
+    },
+    {
+        'id': 'raptors-2025',
+        'title': 'Raptors 2024-25 FG%',
+        'description': 'Dataset of the Toronto Raptors Field Goal % for the 2024-25 season.',
+        'icon': '/assets/Toronto_Raptors_logo.svg',
+        'filename': 'raptors_2025.csv'
     }
 ]
 

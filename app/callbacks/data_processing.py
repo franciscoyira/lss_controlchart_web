@@ -24,6 +24,7 @@ Pattern: Reactive chain — changes in controls or data upload → update app st
 """
 
 from dash import Output, Input, State, html, dcc, dash_table, ctx, ALL, MATCH
+import polars as pl
 # Import your utility functions
 from components.rule_boxes import create_rule_boxes
 from utils.data_loader import parse_csv, load_predefined_dataset
@@ -41,12 +42,13 @@ def register_data_processing_callbacks(app):
         Output('app-state-store', 'data', allow_duplicate=True),
         [Input('sl-range-slider', 'value'),
         Input('dropdown-period-type', 'value'),
-        # Input('input-process-change', 'value'),
+        Input('input-process-change', 'value'),
+        Input('checklist-period-comparison', 'value'),
         Input('input-y-axis-label', 'value')],
         [State('app-state-store', 'data')],
         prevent_initial_call=True
     )
-    def update_app_state_settings(range_slider, period_type, y_axis_label, current_data):
+    def update_app_state_settings(range_slider, period_type, process_change, period_comparison, y_axis_label, current_data):
         """Update the app state with settings values"""
         # Initialize app state if None
         if current_data is None:
@@ -57,14 +59,17 @@ def register_data_processing_callbacks(app):
             current_data['settings'] = {}
             
         # Update only the properties that have changed
-        if ctx.triggered_id == 'sl-range-slider' and range_slider is not None:
+        triggered_id = ctx.triggered_id
+        if triggered_id == 'sl-range-slider' and range_slider is not None:
             current_data['settings']['lsl'] = range_slider[0]
             current_data['settings']['usl'] = range_slider[1]
-        elif ctx.triggered_id == 'dropdown-period-type' and period_type is not None:
+        elif triggered_id == 'dropdown-period-type' and period_type is not None:
             current_data['settings']['period_type'] = period_type
-        # elif ctx.triggered_id == 'input-process-change' and process_change is not None:
-        #     current_data['settings']['process_change'] = process_change
-        elif ctx.triggered_id == 'input-y-axis-label' and y_axis_label is not None:
+        elif triggered_id == 'input-process-change' and process_change is not None:
+            current_data['settings']['process_change'] = process_change
+        elif triggered_id == 'checklist-period-comparison':
+            current_data['settings']['period_comparison_enabled'] = 'period_comparison' in (period_comparison or [])
+        elif triggered_id == 'input-y-axis-label' and y_axis_label is not None:
             current_data['settings']['y_axis_label'] = y_axis_label
         
         return current_data
@@ -161,15 +166,26 @@ def register_data_processing_callbacks(app):
 
         # 4. Process data and generate outputs
         df = df.rename({df.columns[0]: "value"}).with_row_index()
-        stats = calculate_control_stats(df)
-        defaults = get_slider_defaults((stats['min'], stats['max']))
+        
         settings = app_state.get('settings', {}) if app_state else {}
+        period_comparison_enabled = settings.get('period_comparison_enabled', False)
+        process_change_point = settings.get('process_change', 0)
+
+        df_for_stats = df
+        if period_comparison_enabled and process_change_point > 0:
+            df_for_stats = df.filter(pl.col("index") < process_change_point)
+
+        stats = calculate_control_stats(df_for_stats)
+        defaults = get_slider_defaults((stats['min'], stats['max']))
+        
         lsl_value = settings.get('lsl', defaults['lsl'])
         usl_value = settings.get('usl', defaults['usl'])
         capability = calculate_capability(stats['mean'], stats['std_dev'], usl_value, lsl_value)
         df_with_rules = add_control_rules(df, stats, active_rules)
         df_with_mr = add_moving_range(df_with_rules)
-        fig = create_control_chart(df_with_mr, stats, capability or {}, active_rules, settings, usl_value, lsl_value)
+        
+        process_change_value = process_change_point if process_change_point > 0 else None
+        fig = create_control_chart(df_with_mr, stats, capability or {}, active_rules, settings, usl_value, lsl_value, process_change_value)
 
         # 5. Update the 'outputs' dictionary with the new components
         outputs['stats_panel'] = make_stats_panel(stats, capability)
@@ -208,7 +224,7 @@ def register_data_processing_callbacks(app):
                            if c.startswith('rule_') and active_rules.get(int(c.split('_')[1]), True)]
         
         # Build filter queries
-        broken_filter = ' || '.join([f'{{{c}}} = "Broken"' for c in active_rule_cols])
+        broken_filter = ' || '.join([f'{{{c}}} = "Broken"' for c in active_rule_cols]) if active_rule_cols else '""'
         
         # Style configurations
         style_table = {
