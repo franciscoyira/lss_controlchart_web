@@ -62,8 +62,6 @@ def create_settings_toolbar(range_data = None):
         html.Div([
             html.Label("Process Change at:", className="toolbar-label"),
             dcc.Slider(
-                min=0,
-                max=100,
                 dots=False,
                 id="input-process-change",
                 className='toolbar-rangeslider',

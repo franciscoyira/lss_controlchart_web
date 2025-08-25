@@ -25,20 +25,27 @@ def register_period_comparison_callbacks(app):
         Output('input-process-change', 'disabled'),
         Output('input-process-change', 'tooltip'),
         Output('input-process-change', 'value'),
-        Input('checklist-period-comparison', 'value'))
-    def toggle_slider_enabled_state(checklist_value):
-      print(checklist_value)
+        Output('input-process-change', 'min'),
+        Output('input-process-change', 'max'),
+        Input('checklist-period-comparison', 'value'),
+        # receive the data as input
+        State('processed-data-store', 'data')
+        )
+    def toggle_slider_enabled_state(checklist_value, data):
+      min=0
       if checklist_value is None:
         disabled=True
         tooltip={"placement": "top", "always_visible": False}
         value=0
+        max=100
       elif 'period_comparison' not in checklist_value:
         disabled=True
         tooltip={"placement": "top", "always_visible": False}
         value=0
+        max=100
       else:
         disabled=False
         tooltip={"placement": "top", "always_visible": True}
         value=50
-      print(disabled, tooltip, value)
-      return disabled, tooltip, value
+        max=len(data)
+      return disabled, tooltip, value, min, max
