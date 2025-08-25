@@ -43,17 +43,31 @@ def create_settings_toolbar(range_data = None):
                 persistence_type='memory')
         ], className="toolbar-item"),
         
+        # Checkbox - enable Period Comparison
+        html.Div([
+            dcc.Checklist(
+                options=[
+                    {'label': 'Period Comparison',
+                     'value': 'period_comparison'}
+                ],
+                id='checklist-period-comparison',
+                className='toolbar-item',
+                persistence=True,
+                persistence_type='memory'
+            )
+        ], className="toolbar-item"),
+        
+        
         # Process change point
         html.Div([
             html.Label("Process Change at:", className="toolbar-label"),
-            dcc.Input(
-                id="input-process-change",
-                type="number",
-                placeholder="Enter value",
+            dcc.Slider(
                 min=0,
-                step=1,
-                className="toolbar-textbox-input",
-                style={"width": "85px"},
+                max=100,
+                dots=False,
+                id="input-process-change",
+                className='toolbar-rangeslider',
+                included=False,
                 persistence=True,
                 persistence_type='memory'
             )
@@ -61,7 +75,7 @@ def create_settings_toolbar(range_data = None):
         
         # Periods naming dropdown
         html.Div([
-            html.Label("X-axis Label:", className="toolbar-label"),
+            html.Label("Period Units:", className="toolbar-label"),
             dcc.Dropdown(
             id="dropdown-period-type",
             options=[

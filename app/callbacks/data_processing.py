@@ -41,14 +41,13 @@ def register_data_processing_callbacks(app):
         Output('app-state-store', 'data', allow_duplicate=True),
         [Input('sl-range-slider', 'value'),
         Input('dropdown-period-type', 'value'),
-        Input('input-process-change', 'value'),
+        # Input('input-process-change', 'value'),
         Input('input-y-axis-label', 'value')],
         [State('app-state-store', 'data')],
         prevent_initial_call=True
     )
-    def update_app_state_settings(range_slider, period_type, process_change, y_axis_label, current_data):
+    def update_app_state_settings(range_slider, period_type, y_axis_label, current_data):
         """Update the app state with settings values"""
-        print("Slider callback fired, value:", range_slider)
         # Initialize app state if None
         if current_data is None:
             current_data = {}
@@ -63,8 +62,8 @@ def register_data_processing_callbacks(app):
             current_data['settings']['usl'] = range_slider[1]
         elif ctx.triggered_id == 'dropdown-period-type' and period_type is not None:
             current_data['settings']['period_type'] = period_type
-        elif ctx.triggered_id == 'input-process-change' and process_change is not None:
-            current_data['settings']['process_change'] = process_change
+        # elif ctx.triggered_id == 'input-process-change' and process_change is not None:
+        #     current_data['settings']['process_change'] = process_change
         elif ctx.triggered_id == 'input-y-axis-label' and y_axis_label is not None:
             current_data['settings']['y_axis_label'] = y_axis_label
         
@@ -93,7 +92,6 @@ def register_data_processing_callbacks(app):
     )
     def update_output(contents, sample_clicks, menu_clicks, app_state, filename, stored_data):
         """Update the output based on user interactions"""
-        print("app_state in update_output:", app_state)
         active_rules = get_active_rules(app_state)
 
         # 1. Initialize all output variables with their default values
