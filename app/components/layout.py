@@ -122,12 +122,11 @@ def create_layout():
             "It will analyze your process data with Lean Six Sigma analysis methods (like the ",
             html.Strong("8 Nelson rules"),
             " below) to identify instances with unusual process behaviour.",
-            html.Br(),
-            html.P(
-            "Start by uploading your data or selecting one of the example datasets above.",
+            ],
             className="empty-state-text",
             ),
-            ],
+            html.P(
+            "Start by uploading your data or selecting one of the example datasets above.",
             className="empty-state-text",
             ),
             ],

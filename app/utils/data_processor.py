@@ -70,15 +70,17 @@ def add_control_rules(df: pl.DataFrame, stats: dict, active_rules: dict = None) 
     rule_2_counter = mean_diff_sign.rolling_sum(window_size=9)
 
     # Rule 3: six points in a row steadily increasing or decreasing
-    rule_3_counter = val_diff.sign().rolling_sum(window_size=6).abs()
+    # (6 monotonic points = 5 consecutive differences with the same sign)
+    rule_3_counter = val_diff.sign().rolling_sum(window_size=5).abs()
 
     # Rule 4 - alternating pattern - 14 points in a row alternating up and down
+    # (14 points = 13 differences = 12 sign changes; each contributes |Δsign| = 2)
     rule_4_counter = pl.col('value') \
         .diff() \
         .sign() \
         .diff() \
         .abs() \
-        .rolling_sum(window_size=14) \
+        .rolling_sum(window_size=12) \
         .truediv(2)
     
     # Rule 5: Two out of three points in a row in Zone A (2 sigma) or beyond 
@@ -89,8 +91,11 @@ def add_control_rules(df: pl.DataFrame, stats: dict, active_rules: dict = None) 
     rule_5_counter_lower = flag_zone_a_lower.rolling_sum(window_size=3)
 
     # Rule 6: Four out of five points in a row in Zone B or beyond
-    rule_6_flag = pl.when(pl.col("value").is_between(stats['lzl'], stats['uzl'])).then(0).otherwise(1)
-    rule_6_counter = rule_6_flag.rolling_sum(window_size=5)
+    # They have to be on the same side of the centerline (like rule 5)
+    rule_6_flag_upper = pl.when(pl.col("value") > stats['uzl']).then(1).otherwise(0)
+    rule_6_flag_lower = pl.when(pl.col("value") < stats['lzl']).then(1).otherwise(0)
+    rule_6_counter_upper = rule_6_flag_upper.rolling_sum(window_size=5)
+    rule_6_counter_lower = rule_6_flag_lower.rolling_sum(window_size=5)
 
     # Rule 7: Fifteen points in a row within Zone C (the one closest to the centreline) 
     rule_7_flag = pl.when(pl.col("value").is_between(stats['lzl'], stats['uzl'])).then(1).otherwise(0)
@@ -121,16 +126,16 @@ def add_control_rules(df: pl.DataFrame, stats: dict, active_rules: dict = None) 
         rule_columns['rule_2'] = pl.when((rule_2_counter.abs() == 9)).then(pl.lit("Broken")).otherwise(pl.lit("OK"))
     
     if active_rules.get(3, True):
-        rule_columns['rule_3'] = pl.when(rule_3_counter == 6).then(pl.lit("Broken")).otherwise(pl.lit("OK"))
-    
+        rule_columns['rule_3'] = pl.when(rule_3_counter == 5).then(pl.lit("Broken")).otherwise(pl.lit("OK"))
+
     if active_rules.get(4, True):
-        rule_columns['rule_4'] = pl.when(rule_4_counter == 14).then(pl.lit("Broken")).otherwise(pl.lit("OK"))
+        rule_columns['rule_4'] = pl.when(rule_4_counter == 12).then(pl.lit("Broken")).otherwise(pl.lit("OK"))
     
     if active_rules.get(5, True):
         rule_columns['rule_5'] = pl.when((rule_5_counter_upper >= 2) | (rule_5_counter_lower >= 2)).then(pl.lit("Broken")).otherwise(pl.lit("OK"))
     
     if active_rules.get(6, True):
-        rule_columns['rule_6'] = pl.when(rule_6_counter == 4).then(pl.lit("Broken")).otherwise(pl.lit("OK"))
+        rule_columns['rule_6'] = pl.when((rule_6_counter_upper >= 4) | (rule_6_counter_lower >= 4)).then(pl.lit("Broken")).otherwise(pl.lit("OK"))
     
     if active_rules.get(7, True):
         rule_columns['rule_7'] = pl.when(rule_7_counter == 15).then(pl.lit("Broken")).otherwise(pl.lit("OK"))

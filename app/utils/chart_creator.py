@@ -1,4 +1,3 @@
-import plotly.express as px
 import polars as pl
 from plotly.graph_objects import Figure
 import plotly.graph_objects as go
@@ -76,8 +75,8 @@ def create_control_chart(
                   ) if text else None,
                   row=1, col=1)
         
-    # Add Specification Limits if provided
-    if lsl_value and usl_value:
+    # Add Specification Limits if provided (0 is a valid limit, so check for None)
+    if lsl_value is not None and usl_value is not None:
         fig.add_hline(y=lsl_value, line_dash="solid", line_color="#03244f",
                       annotation=dict(font_color="#03244f", x=0.5, xref="paper",
                                       xanchor="center", text="LSL", align="center"),
@@ -133,9 +132,9 @@ def create_control_chart(
     )
     
     fig.add_hline(y=stats['mr_avg'], line_dash="dash", line_color="grey",
-                  annotation=dict(font_color="grey", text=f"{stats["mr_avg"]:.2f}: Mean"), row=2, col=1)
+                  annotation=dict(font_color="grey", text=f"{stats['mr_avg']:.2f}: Mean"), row=2, col=1)
     fig.add_hline(y=stats['mr_ucl'], line_dash="dash", line_color="red",
-                  annotation=dict(font_color="red", text=f"{stats["mr_ucl"]:.2f}: Upper limit for differences between values"), row=2, col=1)
+                  annotation=dict(font_color="red", text=f"{stats['mr_ucl']:.2f}: Upper limit for differences between values"), row=2, col=1)
 
     # --- Titles and Layout ---
     
@@ -161,6 +160,9 @@ def create_control_chart(
     return fig
 
 def make_stats_panel(stats, capability_stats):
+    # capability_stats is None when capability can't be computed (e.g. zero std dev)
+    capability_stats = capability_stats or {}
+
     def fmt(val, precision=3):
         return f"{val:.{precision}f}" if val is not None else "N/A"
 

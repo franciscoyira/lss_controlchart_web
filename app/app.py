@@ -1,3 +1,10 @@
+import os
+import sys
+
+# Make the app's modules importable both when running `python app/app.py`
+# and when serving via `gunicorn app.app:server` from the repo root
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+
 from dash import Dash, html, dcc
 from flask import Flask
 
