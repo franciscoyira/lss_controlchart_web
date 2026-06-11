@@ -23,7 +23,7 @@ def create_settings_toolbar(range_data = None):
     
     # Assume you always have range_data = (min, max)
     defaults = get_slider_defaults(range_data)
-
+    print("defaults", defaults)
     return html.Div([
         # USL (Upper Specification Limit)
         html.Div([

@@ -5,14 +5,14 @@ from components.rule_boxes import create_rule_boxes
 SAMPLE_DATASETS = [
     {
         'id': 'in-control',
-        'title': 'Try in-control data',
+        'title': 'In-control data',
         'description': 'Sample dataset representing a stable, predictable process.',
         'icon': '/assets/chart_icon.svg',
         'filename': 'in_control.csv'
     },
     {
         'id': 'out-of-control',
-        'title': 'Try out-of-control data',
+        'title': 'Out-of-control data',
         'description': 'Sample dataset with special cause variations already present.',
         'icon': '/assets/warning_icon.svg',
         'filename': 'out_of_control.csv'
@@ -23,6 +23,13 @@ SAMPLE_DATASETS = [
         'description': 'Dataset of the Toronto Raptors Field Goal % for the 2024-25 season.',
         'icon': '/assets/Toronto_Raptors_logo.svg',
         'filename': 'raptors_2025.csv'
+    },
+    {
+        'id': 'sleep-bpm-daily',
+        'title': 'Sleep Resting Heart Rate',
+        'description': 'Dataset of daily resting heart rate during sleep',
+        'icon': '/assets/sleep_icon.svg',
+        'filename': 'sleep_bpm_daily.csv'
     }
 ]
 
@@ -72,7 +79,7 @@ def create_layout():
         # The menu itself, hidden by default
         html.Div(id='waffle-menu', className='waffle-menu hidden', children=[
             html.A([
-                html.Img(src="/assets/home_icon.svg", className='waffle-menu-item-icon'),
+                html.Img(src="/assets/home.svg", className='waffle-menu-item-icon'),
                 html.Span("Home", className='waffle-menu-item-text')
             ], href="/", className='waffle-menu-item'),
             
@@ -87,9 +94,10 @@ def create_layout():
                 ], className='waffle-menu-item'),
                 style={'display': 'block'} # Make the upload component a block element
             ),
-            
+            html.Hr(className='waffle-menu-divider'),
+            html.Div("Sample Datasets", className='waffle-menu-section-title'),
             # Dynamically generated sample data items
-            *sample_dataset_menu_items
+            *sample_dataset_menu_items,
         ]),
         
         # Card-style layout for data selection options
