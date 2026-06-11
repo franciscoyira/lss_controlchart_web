@@ -1,47 +1,42 @@
-// Provide immediate feedback on button clicks
-document.addEventListener('DOMContentLoaded', function() {
-    // Function to handle button clicks
-    function addWorkingState(id) {
-        document.getElementById(id).addEventListener('click', function() {
-            // For upload button, we need to add the class to the parent
-            if (id === 'upload-data') {
-                document.getElementById('upload-card').classList.add('working');
-            } else {
-                this.classList.add('working');
-            }
-            
-            // Remove working class after callback completes (handled by MutationObserver)
-        });
+// Provide immediate feedback on option card clicks.
+// Uses event delegation because Dash renders the components with React
+// after the page loads, so elements don't exist at DOMContentLoaded time.
+
+// Pulse a card as soon as it's clicked (sample data cards)
+document.addEventListener('click', function (e) {
+    const card = e.target.closest('.option-card');
+    // The upload card opens a file dialog on click; it gets its feedback
+    // from the 'change' handler below instead, so a cancelled dialog
+    // doesn't leave it pulsing forever
+    if (card && !card.querySelector('input[type="file"]')) {
+        card.classList.add('working');
     }
-    
-    // Add click handlers to all option buttons
-    addWorkingState('upload-card');
-    addWorkingState('btn-in-control');
-    addWorkingState('btn-out-of-control');
-    
-    // Create a MutationObserver to detect when the active class is added by the callback
-    // This will remove the working class once the callback has completed
-    const observer = new MutationObserver(function(mutations) {
-        mutations.forEach(function(mutation) {
-            if (mutation.type === 'attributes' && mutation.attributeName === 'class') {
-                const element = mutation.target;
-                if (element.classList.contains('active') && element.classList.contains('working')) {
-                    element.classList.remove('working');
-                }
-            }
-        });
-    });
-    
-    // Observe all three buttons for class changes
-    const buttons = [
-        document.getElementById('upload-card'), 
-        document.getElementById('btn-in-control'), 
-        document.getElementById('btn-out-of-control')
-    ];
-    
-    buttons.forEach(function(button) {
-        if (button) {
-            observer.observe(button, { attributes: true });
+});
+
+// Pulse the upload card once a file has actually been chosen
+document.addEventListener('change', function (e) {
+    if (e.target instanceof HTMLInputElement && e.target.type === 'file') {
+        const card = e.target.closest('.option-card');
+        if (card) {
+            card.classList.add('working');
+        }
+    }
+}, true);
+
+// Stop pulsing once the callback marks the card as active.
+// (Dash usually rewrites the class attribute wholesale, which already clears
+// 'working'; this observer covers the cases where it doesn't.)
+const workingObserver = new MutationObserver(function (mutations) {
+    mutations.forEach(function (mutation) {
+        const el = mutation.target;
+        if (el.classList && el.classList.contains('active') && el.classList.contains('working')) {
+            el.classList.remove('working');
         }
     });
+});
+
+workingObserver.observe(document.documentElement, {
+    attributes: true,
+    subtree: true,
+    attributeFilter: ['class']
 });

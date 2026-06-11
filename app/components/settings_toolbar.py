@@ -99,6 +99,7 @@ def create_settings_toolbar(range_data = None):
                 id="input-y-axis-label",
                 type="text",
                 value="Value",
+                debounce=True,
                 className="toolbar-textbox-input",
                 style={"width": "100px"},
                 persistence=True,

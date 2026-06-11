@@ -23,10 +23,8 @@ Major Callbacks:
 Pattern: Reactive chain — changes in controls or data upload → update app state → recalculate & update outputs/UI.
 """
 
-from dash import Output, Input, State, html, dcc, dash_table, ctx, ALL, MATCH
-import polars as pl
+from dash import Output, Input, State, html, dcc, dash_table, ctx, ALL, no_update
 # Import your utility functions
-from components.rule_boxes import create_rule_boxes
 from utils.data_loader import parse_csv, load_predefined_dataset
 from utils.data_processor import calculate_capability, calculate_control_stats, add_control_rules, add_moving_range
 from utils.slider_defaults import get_slider_defaults
@@ -89,13 +87,16 @@ def register_data_processing_callbacks(app):
         Output('settings-toolbar-container', 'style'),
         Output('dataset-selector', 'style')],
         [Input('upload-data', 'contents'),
+         Input('upload-data-menu', 'contents'),
          Input({'type': 'sample-data-btn', 'index': ALL}, 'n_clicks'),
          Input({'type': 'sample-data-menu-btn', 'index': ALL}, 'n_clicks'),
          Input('app-state-store', 'data')],
         [State('upload-data', 'filename'),
+         State('upload-data-menu', 'filename'),
          State('stored-data', 'data')]
     )
-    def update_output(contents, sample_clicks, menu_clicks, app_state, filename, stored_data):
+    def update_output(contents, menu_contents, sample_clicks, menu_clicks, app_state,
+                      filename, menu_filename, stored_data):
         """Update the output based on user interactions"""
         active_rules = get_active_rules(app_state)
 
@@ -109,7 +110,10 @@ def register_data_processing_callbacks(app):
             'empty_state_style': {'margin': '40px auto', 'maxWidth': '800px'},
             'processed_data': None,
             'download_container_style': {'display': 'none'},
-            'rule_boxes': create_rule_boxes(),
+            # Rule boxes are static (their content never changes; styling is
+            # handled by update_rule_boxes), so never re-render the container —
+            # replacing it would also drop the section title from the layout
+            'rule_boxes': no_update,
             'upload_class': 'option-card upload-card',
             'sample_btn_classes': ['option-card'] * num_sample_btns,
             'settings_toolbar': None,
@@ -129,10 +133,12 @@ def register_data_processing_callbacks(app):
             return next((ds for ds in SAMPLE_DATASETS if ds['id'] == dataset_id), None)
 
         # 2. Determine which dataset to load based on the trigger
-        if trigger_id == 'upload-data' and contents:
-            outputs['upload_class'] += ' active'
-            df = parse_csv(contents)
-            dataset_name = filename
+        if trigger_id in ('upload-data', 'upload-data-menu'):
+            uploaded = contents if trigger_id == 'upload-data' else menu_contents
+            if uploaded:
+                outputs['upload_class'] += ' active'
+                df = parse_csv(uploaded)
+                dataset_name = filename if trigger_id == 'upload-data' else menu_filename
         elif 'sample-data-btn' in trigger_id or 'sample-data-menu-btn' in trigger_id:
             clicked_index_str = ctx.triggered_id['index']
             dataset_config = find_dataset_by_id(clicked_index_str)
@@ -160,13 +166,17 @@ def register_data_processing_callbacks(app):
 
         # 3. If no data was loaded, return the defaults
         if df is None:
-            if trigger_id == 'upload-data': # Handle upload error
-                 outputs['plot_component'] = html.Div('Error processing the data.')
+            if trigger_id in ('upload-data', 'upload-data-menu'): # Handle upload error
+                outputs['plot_component'] = html.Div(
+                    html.P("We couldn't read that file. Please upload a .csv file "
+                           "with a single column of numeric values (at least 2 data points).",
+                           className="warning-text"))
             return list(outputs.values())
 
         # 4. Process data and generate outputs
-        df = df.rename({df.columns[0]: "value"}).with_row_index()
-        
+        df = df.with_row_index()
+        stats = calculate_control_stats(df)
+        defaults = get_slider_defaults((stats['min'], stats['max']))
         settings = app_state.get('settings', {}) if app_state else {}
         period_comparison_enabled = settings.get('period_comparison_enabled', False)
         process_change_point = settings.get('process_change', 0)
@@ -208,8 +218,14 @@ def register_data_processing_callbacks(app):
         outputs['empty_state_style'] = {'display': 'none'}
         outputs['dataset_selector_style'] = {'display': 'none'}
         outputs['download_container_style'] = {'display': 'block', 'marginBottom': '10px'}
-        outputs['settings_toolbar'] = create_settings_toolbar((stats['min'], stats['max']))
-        outputs['settings_toolbar_style'] = {'display': 'block'}
+        if trigger_id == 'app-state-store':
+            # The toolbar is already on screen and triggered this update;
+            # re-rendering it would reset the control the user is interacting with
+            outputs['settings_toolbar'] = no_update
+            outputs['settings_toolbar_style'] = no_update
+        else:
+            outputs['settings_toolbar'] = create_settings_toolbar((stats['min'], stats['max']))
+            outputs['settings_toolbar_style'] = {'display': 'block'}
         
         # Create the data table and assign to data_info
         # Extract data and columns
