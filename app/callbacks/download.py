@@ -19,7 +19,10 @@ def register_download_callback(app):
         df = pl.DataFrame(processed_data)
         
         # Generate filename based on the original dataset name
-        filename = "rules_" + (stored_data.get('dataset_name', 'dataset') if stored_data else 'dataset')
+        dataset_name = (stored_data or {}).get('dataset_name') or 'dataset'
+        filename = "rules_" + dataset_name
+        if not filename.lower().endswith('.csv'):
+            filename += '.csv'
         
         # Use StringIO to capture the CSV output
         csv_buffer = io.StringIO()
